@@ -1,0 +1,1177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Singleton Design Pattern Interactive Deck</title>
+  <style>
+    :root {
+      --bg: #f5f2ec;
+      --ink: #20242a;
+      --muted: #5d6672;
+      --panel: #ffffff;
+      --line: #d9d2c7;
+      --red: #c44d3f;
+      --green: #28775d;
+      --blue: #28698d;
+      --gold: #94691f;
+      --violet: #66539a;
+      --code: #151a21;
+      --shadow: 0 18px 42px rgba(32, 36, 42, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      background:
+        linear-gradient(130deg, rgba(196, 77, 63, 0.08), transparent 28%),
+        linear-gradient(240deg, rgba(40, 105, 141, 0.1), transparent 32%),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button { font: inherit; }
+
+    .deck-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.84);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 900;
+      background: conic-gradient(from 150deg, var(--violet), var(--blue), var(--green), var(--gold), var(--red), var(--violet));
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(18px, 2.2vw, 30px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .progress-wrap {
+      width: min(34vw, 360px);
+      height: 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #ebe5dc;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--blue), var(--gold));
+      transition: width 160ms ease;
+    }
+
+    .slide-stage {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      padding: 26px 22px 20px;
+      display: grid;
+      align-items: stretch;
+    }
+
+    .slide {
+      display: none;
+      min-height: calc(100vh - 154px);
+      padding: clamp(22px, 3.8vw, 42px);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: var(--shadow);
+      overflow: clip;
+      min-width: 0;
+    }
+
+    .slide.active {
+      display: grid;
+      gap: 22px;
+      align-content: start;
+    }
+
+    .slide-title {
+      display: grid;
+      gap: 10px;
+      max-width: 980px;
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 64px);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    h4 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    p { line-height: 1.55; }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 22px);
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .card,
+    .question,
+    .code-card,
+    .diagram-node {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 18px;
+    }
+
+    .mini {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    ul,
+    ol {
+      margin: 8px 0 0;
+      padding-left: 19px;
+      line-height: 1.5;
+    }
+
+    li + li { margin-top: 7px; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .diagram-node {
+      min-height: 126px;
+      display: grid;
+      align-content: center;
+      gap: 8px;
+      border-top: 6px solid var(--blue);
+      position: relative;
+    }
+
+    .diagram-node:nth-child(2) { border-top-color: var(--gold); }
+    .diagram-node:nth-child(3) { border-top-color: var(--green); }
+    .diagram-node:nth-child(4) { border-top-color: var(--violet); }
+
+    .diagram-node::after {
+      content: ">";
+      position: absolute;
+      right: -13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .diagram-node:last-child::after { content: ""; }
+
+    .concept-box {
+      min-width: 0;
+      border-left: 6px solid var(--green);
+      border-radius: 8px;
+      background: #fff;
+      padding: 18px;
+    }
+
+    .pattern-map,
+    .qa-layout,
+    .quiz-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 18px;
+      align-items: start;
+      min-width: 0;
+    }
+
+    .tabbar,
+    .toolbar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tab,
+    .icon-btn,
+    .choice-btn {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    .tab {
+      padding: 9px 13px;
+      font-weight: 850;
+    }
+
+    .tab:hover,
+    .icon-btn:hover,
+    .choice-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--blue);
+    }
+
+    .tab.active,
+    .choice-btn.selected {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff;
+    }
+
+    .segmented {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .segmented button {
+      border: 0;
+      background: transparent;
+      padding: 8px 12px;
+      color: var(--muted);
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .segmented button.active {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .code-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    pre {
+      margin: 0;
+      max-width: 100%;
+      min-width: 0;
+      max-height: 430px;
+      overflow: auto;
+      padding: 16px;
+      border-radius: 8px;
+      color: #e8eef6;
+      background: var(--code);
+      font-size: 13px;
+      line-height: 1.45;
+      tab-size: 2;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    code {
+      font-family: "Cascadia Code", Consolas, "SFMono-Regular", ui-monospace, monospace;
+    }
+
+    pre code {
+      display: block;
+      min-width: 0;
+    }
+
+    .split-code {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .bad h4 { color: var(--red); }
+    .good h4 { color: var(--green); }
+
+    .metric {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .metric b {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      color: var(--green);
+      background: rgba(40, 119, 93, 0.12);
+    }
+
+    .question {
+      display: grid;
+      gap: 10px;
+    }
+
+    .choice-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .choice-btn {
+      width: 100%;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .answer-box {
+      min-height: 138px;
+      padding: 16px;
+      border-left: 6px solid var(--gold);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+    }
+
+    .notes-link {
+      color: var(--blue);
+      font-weight: 850;
+      text-decoration: none;
+    }
+
+    .footer-nav {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      padding: 14px 22px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      width: 48px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .slide-count {
+      min-width: 92px;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .toc {
+      display: flex;
+      flex: 1;
+      gap: 7px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      padding: 0;
+      border: 1px solid var(--muted);
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .dot.active {
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+
+    @media (max-width: 980px) {
+      .grid-2,
+      .grid-3,
+      .grid-4,
+      .flow,
+      .pattern-map,
+      .split-code,
+      .qa-layout,
+      .quiz-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .diagram-node::after {
+        content: "v";
+        right: 50%;
+        top: auto;
+        bottom: -16px;
+        transform: translateX(50%);
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .progress-wrap { width: 100%; }
+      .slide { min-height: calc(100vh - 210px); }
+    }
+
+    @media (max-width: 620px) {
+      .slide-stage,
+      .footer-nav {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .slide { padding: 18px; }
+      .toc { display: none; }
+      pre { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">1</div>
+        <div>
+          <h1>Singleton Design Pattern</h1>
+          <p>Interactive deck with JavaScript and Java examples</p>
+        </div>
+      </div>
+      <div class="progress-wrap" aria-label="Deck progress">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </header>
+
+    <section class="slide-stage">
+      <article class="slide active" data-title="Start">
+        <div class="slide-title">
+          <p class="eyebrow">Creational design pattern</p>
+          <h2>Singleton guarantees one shared instance with global access.</h2>
+          <p class="lead">The Singleton pattern restricts a class to exactly one instance and gives the application a controlled way to access it. It is useful for shared infrastructure, but risky when it becomes hidden global state.</p>
+        </div>
+        <div class="flow">
+          <div class="diagram-node"><strong>Private creation</strong><span class="mini">External code cannot freely create instances.</span></div>
+          <div class="diagram-node"><strong>Static holder</strong><span class="mini">The class stores its one instance.</span></div>
+          <div class="diagram-node"><strong>Access method</strong><span class="mini">Call <code>getInstance()</code> or import a module instance.</span></div>
+          <div class="diagram-node"><strong>Shared object</strong><span class="mini">Logger, config, metrics, cache, connection manager.</span></div>
+        </div>
+        <div class="grid-3">
+          <div class="card"><h3>Main idea</h3><p class="mini">One object coordinates shared state or shared infrastructure.</p></div>
+          <div class="card"><h3>Design goal</h3><p class="mini">Prevent duplicate expensive or inconsistent instances.</p></div>
+          <div class="card"><h3>Interview signal</h3><p class="mini">You know both the use case and the danger of global state.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Context">
+        <div class="slide-title">
+          <p class="eyebrow">Required context</p>
+          <h2>Concepts behind Singleton.</h2>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Static members</h3>
+            <p class="mini">A static field or method belongs to the class itself, not to an individual object. Singleton usually stores the instance in a static field.</p>
+          </div>
+          <div class="card">
+            <h3>Private constructor</h3>
+            <p class="mini">In Java, a private constructor prevents external code from calling <code>new</code>. JavaScript can simulate this with module scope or private tokens.</p>
+          </div>
+          <div class="card">
+            <h3>Interface overview</h3>
+            <p class="mini">An interface is a contract. In Java, you can depend on <code>Logger</code> while the singleton implementation is <code>AppLogger</code>. JavaScript uses duck typing for the same idea.</p>
+          </div>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Lazy initialization</h3>
+            <p class="mini">Create the instance only when first needed. Saves startup cost but needs thread safety in multi-threaded languages.</p>
+          </div>
+          <div class="card">
+            <h3>Eager initialization</h3>
+            <p class="mini">Create the instance when the class loads. Simpler and thread-safe in Java, but may create an object even if unused.</p>
+          </div>
+          <div class="card">
+            <h3>JavaScript module cache</h3>
+            <p class="mini">ES modules are evaluated once per runtime and cached, so exporting one object is often the cleanest JavaScript singleton.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Examples">
+        <div class="slide-title">
+          <p class="eyebrow">Interactive example</p>
+          <h2>Choose a Singleton style and language.</h2>
+        </div>
+        <div class="tabbar" role="tablist" aria-label="Singleton examples">
+          <button class="tab active" data-example="classic">Classic Singleton</button>
+          <button class="tab" data-example="module">JS Module Singleton</button>
+          <button class="tab" data-example="threadsafe">Thread Safe Singleton</button>
+        </div>
+        <div class="pattern-map">
+          <div class="concept-box" id="exampleText"></div>
+          <div class="code-card">
+            <div class="code-controls">
+              <h3 id="exampleCodeTitle">Example</h3>
+              <div class="segmented" aria-label="Language selector">
+                <button class="active" data-lang="js">JS</button>
+                <button data-lang="java">Java</button>
+              </div>
+            </div>
+            <pre><code id="exampleCode"></code></pre>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Before After">
+        <div class="slide-title">
+          <p class="eyebrow">Before and after</p>
+          <h2>Replace duplicate infrastructure objects with one controlled instance.</h2>
+          <p class="lead">Here multiple services repeatedly create configuration readers, causing duplicated loading and inconsistent values during runtime.</p>
+        </div>
+        <div class="split-code">
+          <div class="code-card bad">
+            <h4>Before: repeated configuration loading</h4>
+            <pre><code>class OrderService {
+  constructor() {
+    this.config = new ConfigManager();
+  }
+}
+
+class PaymentService {
+  constructor() {
+    this.config = new ConfigManager();
+  }
+}
+
+class ConfigManager {
+  constructor() {
+    this.settings = loadEnvAndJsonFiles();
+  }
+}</code></pre>
+          </div>
+          <div class="code-card good">
+            <h4>After: shared singleton configuration</h4>
+            <pre><code>class ConfigManager {
+  static instance;
+
+  static getInstance() {
+    if (!ConfigManager.instance) {
+      ConfigManager.instance = new ConfigManager();
+    }
+    return ConfigManager.instance;
+  }
+
+  constructor() {
+    if (ConfigManager.instance) return ConfigManager.instance;
+    this.settings = loadEnvAndJsonFiles();
+  }
+}
+
+const config = ConfigManager.getInstance();</code></pre>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="When Where">
+        <div class="slide-title">
+          <p class="eyebrow">Usage</p>
+          <h2>When and where Singleton works best.</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Use Singleton when</h3>
+            <ul>
+              <li>Exactly one instance should exist in a process.</li>
+              <li>Object creation is expensive and repeated creation is wasteful.</li>
+              <li>A shared coordinator must maintain consistent state.</li>
+              <li>The instance has no request-specific or user-specific state.</li>
+              <li>Lifecycle should be controlled in one place.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Use Singleton in</h3>
+            <ul>
+              <li>Application configuration reader.</li>
+              <li>Logger or telemetry collector.</li>
+              <li>Metrics registry.</li>
+              <li>Feature flag provider.</li>
+              <li>Connection pool manager, not individual DB connections.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-box">
+          <h3>Do not force it</h3>
+          <p>Do not use Singleton for request state, user sessions, shopping carts, domain entities, or anything that needs multiple independent instances.</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Pros Cons">
+        <div class="slide-title">
+          <p class="eyebrow">Tradeoffs</p>
+          <h2>Pros, cons, and business efficiency.</h2>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Pros</h3>
+            <ul>
+              <li>Ensures one controlled instance.</li>
+              <li>Can reduce repeated expensive setup.</li>
+              <li>Provides consistent shared configuration.</li>
+              <li>Simple global access for infrastructure concerns.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Cons</h3>
+            <ul>
+              <li>Can become hidden global mutable state.</li>
+              <li>Can make unit tests harder.</li>
+              <li>Can hide dependencies from constructors.</li>
+              <li>Thread safety and lifecycle can be tricky.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Business efficiency</h3>
+            <ul>
+              <li>Configuration stays consistent.</li>
+              <li>Logging and metrics are centralized.</li>
+              <li>Expensive initialization happens once.</li>
+              <li>Operational behavior is easier to standardize.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="metric"><b>1</b><p class="mini"><strong>Good Singleton:</strong> stateless or process-level infrastructure such as logger, config, metrics.</p></div>
+          <div class="metric"><b>2</b><p class="mini"><strong>Bad Singleton:</strong> business data that changes per user, request, transaction, or test.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Q and A">
+        <div class="slide-title">
+          <p class="eyebrow">Interview section 1</p>
+          <h2>Question and answer.</h2>
+        </div>
+        <div class="qa-layout">
+          <div class="question">
+            <h3 id="qaPrompt">Question</h3>
+            <div class="toolbar">
+              <button class="tab" id="prevQa">Previous</button>
+              <button class="tab" id="nextQa">Next</button>
+            </div>
+          </div>
+          <div class="answer-box" id="qaAnswer">Answer</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Scenario Q and A">
+        <div class="slide-title">
+          <p class="eyebrow">Interview section 2</p>
+          <h2>Scenario-based question and answer.</h2>
+        </div>
+        <div class="qa-layout">
+          <div class="question">
+            <h3 id="scenarioPrompt">Scenario</h3>
+            <div class="toolbar">
+              <button class="tab" id="prevScenario">Previous</button>
+              <button class="tab" id="nextScenario">Next</button>
+            </div>
+          </div>
+          <div class="answer-box" id="scenarioAnswer">Answer</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Problem Q and A">
+        <div class="slide-title">
+          <p class="eyebrow">Interview section 3</p>
+          <h2>Problem-solving question and answer.</h2>
+        </div>
+        <div class="qa-layout">
+          <div class="question">
+            <h3 id="problemPrompt">Problem</h3>
+            <div class="toolbar">
+              <button class="tab" id="prevProblem">Previous</button>
+              <button class="tab" id="nextProblem">Next</button>
+            </div>
+          </div>
+          <div class="answer-box" id="problemAnswer">Answer</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Quiz">
+        <div class="slide-title">
+          <p class="eyebrow">Interactive drill</p>
+          <h2>Choose the best Singleton decision.</h2>
+        </div>
+        <div class="quiz-layout">
+          <div class="question">
+            <h3 id="quizPrompt">Prompt</h3>
+            <div class="choice-grid" id="quizChoices"></div>
+            <div class="toolbar">
+              <button class="tab" id="nextQuiz">Next question</button>
+            </div>
+          </div>
+          <div class="answer-box" id="quizAnswer">Pick an answer to see the reasoning.</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Revision">
+        <div class="slide-title">
+          <p class="eyebrow">Revision</p>
+          <h2>Memory hooks and files.</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Remember</h3>
+            <ul>
+              <li>Singleton means one instance per process/runtime.</li>
+              <li>It is a creational pattern.</li>
+              <li>Use it mostly for shared infrastructure.</li>
+              <li>Avoid hidden mutable business state.</li>
+              <li>In JavaScript, module exports often solve the problem cleanly.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Revision files</h3>
+            <p class="mini">Markdown notes: <a class="notes-link" href="./revision-notes.md">revision-notes.md</a></p>
+            <p class="mini">PDF notes: <a class="notes-link" href="./revision-notes.pdf">revision-notes.pdf</a></p>
+          </div>
+        </div>
+        <div class="concept-box">
+          <h3>One-line interview answer</h3>
+          <p>"I use Singleton when exactly one process-wide infrastructure instance should exist, but I avoid it for mutable business state because it hides dependencies and hurts tests."</p>
+        </div>
+      </article>
+    </section>
+
+    <footer class="footer-nav">
+      <button class="icon-btn" id="prevSlide" aria-label="Previous slide">&lt;</button>
+      <div class="slide-count" id="slideCount">1 / 11</div>
+      <div class="toc" id="toc"></div>
+      <button class="icon-btn" id="nextSlide" aria-label="Next slide">&gt;</button>
+    </footer>
+  </main>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const progressBar = document.getElementById("progressBar");
+    const slideCount = document.getElementById("slideCount");
+    const toc = document.getElementById("toc");
+    let slideIndex = 0;
+
+    slides.forEach((slide, index) => {
+      const dot = document.createElement("button");
+      dot.className = "dot";
+      dot.type = "button";
+      dot.setAttribute("aria-label", `Go to ${slide.dataset.title}`);
+      dot.addEventListener("click", () => showSlide(index));
+      toc.appendChild(dot);
+    });
+
+    function showSlide(index) {
+      slideIndex = Math.max(0, Math.min(index, slides.length - 1));
+      slides.forEach((slide, i) => slide.classList.toggle("active", i === slideIndex));
+      Array.from(toc.children).forEach((dot, i) => dot.classList.toggle("active", i === slideIndex));
+      progressBar.style.width = `${((slideIndex + 1) / slides.length) * 100}%`;
+      slideCount.textContent = `${slideIndex + 1} / ${slides.length}`;
+    }
+
+    document.getElementById("prevSlide").addEventListener("click", () => showSlide(slideIndex - 1));
+    document.getElementById("nextSlide").addEventListener("click", () => showSlide(slideIndex + 1));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight") showSlide(slideIndex + 1);
+      if (event.key === "ArrowLeft") showSlide(slideIndex - 1);
+    });
+
+    const exampleData = {
+      classic: {
+        title: "Classic Singleton",
+        text: `
+          <h3>Classic Singleton</h3>
+          <p>The class owns a static instance and exposes a static access method.</p>
+          <ul>
+            <li><strong>When:</strong> one shared object should exist.</li>
+            <li><strong>Where:</strong> logger, config, metrics registry.</li>
+            <li><strong>Caution:</strong> hide mutable state carefully.</li>
+          </ul>`,
+        js: `class AppLogger {
+  static instance;
+
+  static getInstance() {
+    if (!AppLogger.instance) {
+      AppLogger.instance = new AppLogger();
+    }
+    return AppLogger.instance;
+  }
+
+  constructor() {
+    if (AppLogger.instance) return AppLogger.instance;
+    this.logs = [];
+  }
+
+  info(message) {
+    this.logs.push({ level: "info", message });
+    console.log(message);
+  }
+}
+
+const logger = AppLogger.getInstance();`,
+        java: `interface Logger {
+  void info(String message);
+}
+
+public final class AppLogger implements Logger {
+  private static AppLogger instance;
+
+  private AppLogger() {
+  }
+
+  public static AppLogger getInstance() {
+    if (instance == null) {
+      instance = new AppLogger();
+    }
+    return instance;
+  }
+
+  public void info(String message) {
+    System.out.println(message);
+  }
+}`
+      },
+      module: {
+        title: "JavaScript Module Singleton",
+        text: `
+          <h3>JS module singleton</h3>
+          <p>JavaScript modules are cached after first evaluation. Exporting one object is often simpler than writing a classic singleton class.</p>
+          <ul>
+            <li><strong>When:</strong> Node.js or browser bundler module systems.</li>
+            <li><strong>Where:</strong> config, logger, shared registry.</li>
+            <li><strong>Benefit:</strong> simpler, idiomatic JavaScript.</li>
+          </ul>`,
+        js: `// logger.js
+class Logger {
+  info(message) {
+    console.log("[info]", message);
+  }
+}
+
+export const logger = new Logger();
+
+// orderService.js
+import { logger } from "./logger.js";
+
+export function confirmOrder(order) {
+  logger.info("Order confirmed: " + order.id);
+}`,
+        java: `// Java does not have ES module caching in the same style.
+// The closest simple version is eager initialization.
+
+public final class AppConfig {
+  private static final AppConfig INSTANCE = new AppConfig();
+
+  private AppConfig() {
+  }
+
+  public static AppConfig getInstance() {
+    return INSTANCE;
+  }
+
+  public String get(String key) {
+    return System.getenv(key);
+  }
+}`
+      },
+      threadsafe: {
+        title: "Thread Safe Singleton",
+        text: `
+          <h3>Thread safe singleton</h3>
+          <p>In multi-threaded languages, lazy initialization must prevent two threads from creating two instances at the same time.</p>
+          <ul>
+            <li><strong>When:</strong> lazy creation in concurrent applications.</li>
+            <li><strong>Where:</strong> Java server applications.</li>
+            <li><strong>Best Java option:</strong> enum singleton or initialization-on-demand holder.</li>
+          </ul>`,
+        js: `// JavaScript runs application code on one main event loop
+// in many environments, so classic thread locking is uncommon.
+// In Node.js worker threads or clusters, each worker/process
+// can still have its own singleton instance.
+
+class MetricsRegistry {
+  static instance = new MetricsRegistry();
+
+  constructor() {
+    if (MetricsRegistry.instance) return MetricsRegistry.instance;
+    this.metrics = new Map();
+  }
+}
+
+export const metricsRegistry = MetricsRegistry.instance;`,
+        java: `public final class MetricsRegistry {
+  private MetricsRegistry() {
+  }
+
+  private static class Holder {
+    private static final MetricsRegistry INSTANCE =
+      new MetricsRegistry();
+  }
+
+  public static MetricsRegistry getInstance() {
+    return Holder.INSTANCE;
+  }
+
+  public void record(String name, double value) {
+    // record metric
+  }
+}`
+      }
+    };
+
+    let activeExample = "classic";
+    let activeLang = "js";
+    const exampleText = document.getElementById("exampleText");
+    const exampleCode = document.getElementById("exampleCode");
+    const exampleCodeTitle = document.getElementById("exampleCodeTitle");
+
+    function renderExample() {
+      const data = exampleData[activeExample];
+      exampleText.innerHTML = data.text;
+      exampleCodeTitle.textContent = `${data.title} example`;
+      exampleCode.textContent = data[activeLang];
+    }
+
+    document.querySelectorAll("[data-example]").forEach(button => {
+      button.addEventListener("click", () => {
+        activeExample = button.dataset.example;
+        document.querySelectorAll("[data-example]").forEach(tab => tab.classList.toggle("active", tab === button));
+        renderExample();
+      });
+    });
+
+    document.querySelectorAll("[data-lang]").forEach(button => {
+      button.addEventListener("click", () => {
+        activeLang = button.dataset.lang;
+        document.querySelectorAll("[data-lang]").forEach(item => item.classList.toggle("active", item === button));
+        renderExample();
+      });
+    });
+
+    const qaItems = [
+      {
+        q: "What is the Singleton design pattern?",
+        a: "Singleton is a creational pattern that restricts a class to one instance and provides a global access point to that instance."
+      },
+      {
+        q: "Why is Singleton controversial?",
+        a: "Because it can behave like hidden global state. It can hide dependencies, make tests order-dependent, and couple code to one concrete implementation."
+      },
+      {
+        q: "Lazy vs eager Singleton?",
+        a: "Lazy creates the instance when first requested. Eager creates it when the class loads. Lazy saves startup cost; eager is simpler and often safer."
+      },
+      {
+        q: "How does JavaScript commonly implement Singleton?",
+        a: "Often through module caching: export one object from a module. The module is evaluated once per runtime and reused by importers."
+      },
+      {
+        q: "How can interfaces help with Singleton?",
+        a: "Services can depend on an interface such as Logger instead of a concrete singleton. This makes testing and replacement easier."
+      }
+    ];
+
+    const scenarioItems = [
+      {
+        q: "A config file is loaded separately by many services and values become inconsistent. Is Singleton useful?",
+        a: "Yes. A process-wide ConfigManager singleton can load configuration once and provide consistent read-only access."
+      },
+      {
+        q: "A shopping cart is stored as a Singleton because the app should have one cart. Is this correct?",
+        a: "No. A cart is user-specific state. Singleton would mix users and requests. Use request/session-scoped objects instead."
+      },
+      {
+        q: "A Java web app uses lazy Singleton for metrics, but traffic can call it from many threads. What is the risk?",
+        a: "Two threads may create two instances if initialization is not thread safe. Use enum singleton, holder pattern, or synchronized/double-checked locking correctly."
+      },
+      {
+        q: "A logger singleton makes tests hard because messages leak between tests. What should you do?",
+        a: "Prefer injecting a Logger interface. If a singleton remains, keep it stateless or provide a controlled reset only for tests."
+      }
+    ];
+
+    const problemItems = [
+      {
+        q: "Problem: implement one shared config reader in JavaScript.",
+        a: "Use a module singleton: create ConfigManager once in config.js and export the instance. Import that instance wherever needed."
+      },
+      {
+        q: "Problem: make Java lazy Singleton thread safe without synchronizing every call.",
+        a: "Use the initialization-on-demand holder idiom. The nested holder class loads only when getInstance is called and Java class loading guarantees thread safety."
+      },
+      {
+        q: "Problem: existing Singleton hides dependencies and blocks unit testing.",
+        a: "Introduce an interface, inject it into services, and keep the singleton only at the composition root. Tests can inject fake implementations."
+      },
+      {
+        q: "Problem: Singleton stores mutable tenant data and production has cross-tenant bugs.",
+        a: "Remove Singleton for tenant data. Use tenant-scoped or request-scoped objects. Singleton should not hold data that varies per user, request, or tenant."
+      }
+    ];
+
+    function bindRotator(items, promptId, answerId, prevId, nextId) {
+      let index = 0;
+      const prompt = document.getElementById(promptId);
+      const answer = document.getElementById(answerId);
+      function render() {
+        prompt.textContent = items[index].q;
+        answer.innerHTML = `<strong>Answer:</strong><p>${items[index].a}</p>`;
+      }
+      document.getElementById(prevId).addEventListener("click", () => {
+        index = (index - 1 + items.length) % items.length;
+        render();
+      });
+      document.getElementById(nextId).addEventListener("click", () => {
+        index = (index + 1) % items.length;
+        render();
+      });
+      render();
+    }
+
+    const quiz = [
+      {
+        prompt: "Which is the best Singleton candidate?",
+        choices: ["Read-only application configuration", "User shopping cart", "Order entity"],
+        answer: 0,
+        reason: "Application configuration is process-wide infrastructure. Cart and order are business/request-specific data."
+      },
+      {
+        prompt: "A Singleton stores mutable request data. What is the main risk?",
+        choices: ["Cross-request state leakage", "Too many interfaces", "Slow CSS rendering"],
+        answer: 0,
+        reason: "Mutable request data in a singleton can leak between users, requests, tests, or tenants."
+      },
+      {
+        prompt: "What is the most idiomatic JavaScript singleton in many apps?",
+        choices: ["Export one module instance", "Use private Java constructor", "Create a new object everywhere"],
+        answer: 0,
+        reason: "ES modules are cached, so exporting one object is usually simpler than a classic singleton class."
+      }
+    ];
+
+    let quizIndex = 0;
+    const quizPrompt = document.getElementById("quizPrompt");
+    const quizChoices = document.getElementById("quizChoices");
+    const quizAnswer = document.getElementById("quizAnswer");
+
+    function renderQuiz() {
+      const current = quiz[quizIndex];
+      quizPrompt.textContent = current.prompt;
+      quizAnswer.textContent = "Pick an answer to see the reasoning.";
+      quizChoices.innerHTML = "";
+      current.choices.forEach((choice, index) => {
+        const button = document.createElement("button");
+        button.className = "choice-btn";
+        button.type = "button";
+        button.textContent = choice;
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".choice-btn").forEach(item => item.classList.remove("selected"));
+          button.classList.add("selected");
+          const correct = index === current.answer;
+          quizAnswer.innerHTML = `<strong>${correct ? "Correct." : "Not quite."}</strong><p>${current.reason}</p>`;
+        });
+        quizChoices.appendChild(button);
+      });
+    }
+
+    document.getElementById("nextQuiz").addEventListener("click", () => {
+      quizIndex = (quizIndex + 1) % quiz.length;
+      renderQuiz();
+    });
+
+    renderExample();
+    bindRotator(qaItems, "qaPrompt", "qaAnswer", "prevQa", "nextQa");
+    bindRotator(scenarioItems, "scenarioPrompt", "scenarioAnswer", "prevScenario", "nextScenario");
+    bindRotator(problemItems, "problemPrompt", "problemAnswer", "prevProblem", "nextProblem");
+    renderQuiz();
+    showSlide(0);
+  </script>
+</body>
+</html>
