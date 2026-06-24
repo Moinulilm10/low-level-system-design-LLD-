@@ -1,0 +1,1285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Strategy Design Pattern Interactive Deck</title>
+  <style>
+    :root {
+      --bg: #f4f1eb;
+      --ink: #20242a;
+      --muted: #596572;
+      --panel: #ffffff;
+      --line: #d9d3c8;
+      --red: #c54d3f;
+      --green: #28775d;
+      --blue: #28698d;
+      --gold: #94691f;
+      --violet: #69549b;
+      --code: #151a21;
+      --shadow: 0 18px 42px rgba(32, 36, 42, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      background:
+        linear-gradient(130deg, rgba(197, 77, 63, 0.08), transparent 28%),
+        linear-gradient(240deg, rgba(40, 105, 141, 0.1), transparent 32%),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .deck-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      color: #fff;
+      border-radius: 8px;
+      font-weight: 900;
+      background: conic-gradient(from 160deg, var(--blue), var(--green), var(--gold), var(--red), var(--violet), var(--blue));
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(18px, 2.2vw, 30px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .progress-wrap {
+      width: min(34vw, 360px);
+      height: 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #ebe5dc;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--blue), var(--gold));
+      transition: width 160ms ease;
+    }
+
+    .slide-stage {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      padding: 26px 22px 20px;
+      display: grid;
+      align-items: stretch;
+    }
+
+    .slide {
+      display: none;
+      min-height: calc(100vh - 154px);
+      padding: clamp(22px, 3.8vw, 42px);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: var(--shadow);
+      overflow: clip;
+      min-width: 0;
+    }
+
+    .slide.active {
+      display: grid;
+      gap: 22px;
+      align-content: start;
+    }
+
+    .slide-title {
+      display: grid;
+      gap: 10px;
+      max-width: 980px;
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 64px);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    h4 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    p {
+      line-height: 1.55;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 22px);
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .card,
+    .question,
+    .code-card,
+    .diagram-node {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 18px;
+    }
+
+    .mini {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    ul,
+    ol {
+      margin: 8px 0 0;
+      padding-left: 19px;
+      line-height: 1.5;
+    }
+
+    li + li {
+      margin-top: 7px;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: 0.9fr 0.9fr 1.1fr 0.9fr;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .diagram-node {
+      min-height: 126px;
+      display: grid;
+      align-content: center;
+      gap: 8px;
+      border-top: 6px solid var(--blue);
+      position: relative;
+    }
+
+    .diagram-node:nth-child(2) {
+      border-top-color: var(--gold);
+    }
+
+    .diagram-node:nth-child(3) {
+      border-top-color: var(--green);
+    }
+
+    .diagram-node:nth-child(4) {
+      border-top-color: var(--violet);
+    }
+
+    .diagram-node::after {
+      content: ">";
+      position: absolute;
+      right: -13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .diagram-node:last-child::after {
+      content: "";
+    }
+
+    .strategy-map {
+      display: grid;
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: 18px;
+      align-items: start;
+      min-width: 0;
+    }
+
+    .concept-box {
+      border-left: 6px solid var(--green);
+      border-radius: 8px;
+      background: #fff;
+      padding: 18px;
+      min-width: 0;
+    }
+
+    .tabbar,
+    .toolbar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tab,
+    .icon-btn,
+    .choice-btn {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    .tab {
+      padding: 9px 13px;
+      font-weight: 850;
+    }
+
+    .tab:hover,
+    .icon-btn:hover,
+    .choice-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--blue);
+    }
+
+    .tab.active,
+    .choice-btn.selected {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff;
+    }
+
+    .segmented {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .segmented button {
+      border: 0;
+      background: transparent;
+      padding: 8px 12px;
+      color: var(--muted);
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .segmented button.active {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .code-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    pre {
+      margin: 0;
+      max-width: 100%;
+      min-width: 0;
+      max-height: 430px;
+      overflow: auto;
+      padding: 16px;
+      border-radius: 8px;
+      color: #e8eef6;
+      background: var(--code);
+      font-size: 13px;
+      line-height: 1.45;
+      tab-size: 2;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    code {
+      font-family: "Cascadia Code", Consolas, "SFMono-Regular", ui-monospace, monospace;
+    }
+
+    pre code {
+      display: block;
+      min-width: 0;
+    }
+
+    .split-code {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .bad h4 {
+      color: var(--red);
+    }
+
+    .good h4 {
+      color: var(--green);
+    }
+
+    .metric {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .metric b {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      color: var(--green);
+      background: rgba(40, 119, 93, 0.12);
+    }
+
+    .qa-layout,
+    .quiz-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+      gap: 18px;
+      align-items: start;
+      min-width: 0;
+    }
+
+    .question {
+      display: grid;
+      gap: 10px;
+    }
+
+    .choice-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .choice-btn {
+      width: 100%;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .answer-box {
+      min-height: 138px;
+      padding: 16px;
+      border-left: 6px solid var(--gold);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+    }
+
+    .footer-nav {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      padding: 14px 22px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      width: 48px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .slide-count {
+      min-width: 92px;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .toc {
+      display: flex;
+      flex: 1;
+      gap: 7px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      padding: 0;
+      border: 1px solid var(--muted);
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .dot.active {
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+
+    .notes-link {
+      color: var(--blue);
+      font-weight: 850;
+      text-decoration: none;
+    }
+
+    @media (max-width: 980px) {
+      .grid-2,
+      .grid-3,
+      .grid-4,
+      .flow,
+      .strategy-map,
+      .split-code,
+      .qa-layout,
+      .quiz-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .diagram-node::after {
+        content: "v";
+        right: 50%;
+        top: auto;
+        bottom: -16px;
+        transform: translateX(50%);
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .progress-wrap {
+        width: 100%;
+      }
+
+      .slide {
+        min-height: calc(100vh - 210px);
+      }
+    }
+
+    @media (max-width: 620px) {
+      .slide-stage,
+      .footer-nav {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .slide {
+        padding: 18px;
+      }
+
+      .toc {
+        display: none;
+      }
+
+      pre {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">St</div>
+        <div>
+          <h1>Strategy Design Pattern</h1>
+          <p>Interactive deck with JavaScript and Java examples</p>
+        </div>
+      </div>
+      <div class="progress-wrap" aria-label="Deck progress">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </header>
+
+    <section class="slide-stage">
+      <article class="slide active" data-title="Start">
+        <div class="slide-title">
+          <p class="eyebrow">Behavioral design pattern</p>
+          <h2>Strategy moves changing algorithms out of business workflow.</h2>
+          <p class="lead">The Strategy pattern lets you define a family of algorithms, put each one in its own class or object, and make them interchangeable at runtime without changing the client workflow.</p>
+        </div>
+        <div class="flow">
+          <div class="diagram-node"><strong>Context</strong><span class="mini">Checkout, shipping, pricing, sorting, auth, tax.</span></div>
+          <div class="diagram-node"><strong>Strategy contract</strong><span class="mini">A stable method such as <code>calculate()</code> or <code>pay()</code>.</span></div>
+          <div class="diagram-node"><strong>Concrete strategies</strong><span class="mini">VIP discount, regular discount, card payment, PayPal payment.</span></div>
+          <div class="diagram-node"><strong>Runtime choice</strong><span class="mini">Pick behavior from config, user type, feature flag, or request.</span></div>
+        </div>
+        <div class="grid-3">
+          <div class="card"><h3>Main idea</h3><p class="mini">Replace conditional algorithm selection with polymorphic behavior.</p></div>
+          <div class="card"><h3>Design goal</h3><p class="mini">Keep business workflow stable while algorithms vary independently.</p></div>
+          <div class="card"><h3>Interview signal</h3><p class="mini">You know when to use composition instead of growing if/else blocks.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Definition">
+        <div class="slide-title">
+          <p class="eyebrow">Definition</p>
+          <h2>Strategy is composition around a stable behavior contract.</h2>
+        </div>
+        <div class="strategy-map">
+          <div class="concept-box">
+            <h3>Participants</h3>
+            <ul>
+              <li><strong>Context:</strong> object that uses a strategy.</li>
+              <li><strong>Strategy:</strong> interface or expected method shape.</li>
+              <li><strong>Concrete strategy:</strong> one implementation of the algorithm.</li>
+              <li><strong>Client:</strong> chooses which strategy to inject.</li>
+            </ul>
+          </div>
+          <div class="grid-2">
+            <div class="card"><h3>Without Strategy</h3><p class="mini">A context has conditionals for every algorithm: <code>if vip</code>, <code>if new</code>, <code>if coupon</code>. Each new rule modifies tested workflow code.</p></div>
+            <div class="card"><h3>With Strategy</h3><p class="mini">The context calls <code>strategy.execute()</code>. New rules are added as new strategy classes or objects.</p></div>
+            <div class="card"><h3>SOLID link</h3><p class="mini">Strategy supports Open Closed Principle and Dependency Inversion.</p></div>
+            <div class="card"><h3>Pattern family</h3><p class="mini">Behavioral pattern. It changes what an object does by composing behavior.</p></div>
+          </div>
+        </div>
+        <div class="pill-row">
+          <span class="pill">Behavior varies</span>
+          <span class="pill">Workflow stays stable</span>
+          <span class="pill">Runtime selection</span>
+          <span class="pill">Composition over inheritance</span>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Examples">
+        <div class="slide-title">
+          <p class="eyebrow">Interactive example</p>
+          <h2>Choose a business case and language.</h2>
+        </div>
+        <div class="tabbar" role="tablist" aria-label="Strategy examples">
+          <button class="tab active" data-example="discount">Discount</button>
+          <button class="tab" data-example="payment">Payment</button>
+          <button class="tab" data-example="shipping">Shipping</button>
+        </div>
+        <div class="strategy-map">
+          <div class="concept-box" id="exampleText"></div>
+          <div class="code-card">
+            <div class="code-controls">
+              <h3 id="exampleCodeTitle">Example</h3>
+              <div class="segmented" aria-label="Language selector">
+                <button class="active" data-lang="js">JS</button>
+                <button data-lang="java">Java</button>
+              </div>
+            </div>
+            <pre><code id="exampleCode"></code></pre>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Before After">
+        <div class="slide-title">
+          <p class="eyebrow">Before and after</p>
+          <h2>Move the changing rule behind a strategy.</h2>
+          <p class="lead">Here the checkout workflow should not change every time the business adds a new discount policy.</p>
+        </div>
+        <div class="split-code">
+          <div class="code-card bad">
+            <h4>Before: conditional business rules</h4>
+            <pre><code>class CheckoutService {
+  checkout(cart, customer) {
+    let discount = 0;
+
+    if (customer.type === "VIP") {
+      discount = cart.total() * 0.20;
+    } else if (customer.type === "NEW") {
+      discount = cart.total() * 0.10;
+    } else if (customer.hasCoupon) {
+      discount = cart.total() * 0.05;
+    }
+
+    return cart.total() - discount;
+  }
+}</code></pre>
+          </div>
+          <div class="code-card good">
+            <h4>After: interchangeable strategy</h4>
+            <pre><code>class CheckoutService {
+  constructor(discountStrategy) {
+    this.discountStrategy = discountStrategy;
+  }
+
+  checkout(cart, customer) {
+    const discount = this.discountStrategy.calculate(cart, customer);
+    return cart.total() - discount;
+  }
+}
+
+class VipDiscount {
+  calculate(cart) {
+    return cart.total() * 0.20;
+  }
+}</code></pre>
+          </div>
+        </div>
+        <div class="grid-3">
+          <div class="card"><h3>Change isolated</h3><p class="mini">Add <code>FestivalDiscount</code> without editing checkout.</p></div>
+          <div class="card"><h3>Test focused</h3><p class="mini">Test each strategy separately, then test checkout with a fake strategy.</p></div>
+          <div class="card"><h3>Business readable</h3><p class="mini">Policies become named objects the product team can discuss.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="When Where">
+        <div class="slide-title">
+          <p class="eyebrow">Usage</p>
+          <h2>When and where Strategy works best.</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Use Strategy when</h3>
+            <ul>
+              <li>You have multiple ways to perform the same business action.</li>
+              <li>Algorithms change independently from the main workflow.</li>
+              <li>A class has repeated <code>if</code>, <code>else if</code>, or <code>switch</code> branches for behavior.</li>
+              <li>You need to choose behavior at runtime.</li>
+              <li>You want to test each rule without booting the full application.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Use Strategy in</h3>
+            <ul>
+              <li>Discount, tax, commission, and pricing rules.</li>
+              <li>Payment providers and refund logic.</li>
+              <li>Shipping cost calculators.</li>
+              <li>Authentication and authorization policies.</li>
+              <li>Sorting, ranking, recommendation, and validation algorithms.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-box">
+          <h3>Do not force it</h3>
+          <p>If there is only one simple algorithm and no sign of variation, a normal function is clearer. Strategy is useful when behavior has meaningful alternatives or future change is likely.</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Pros Cons">
+        <div class="slide-title">
+          <p class="eyebrow">Tradeoffs</p>
+          <h2>Pros, cons, and business efficiency.</h2>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Pros</h3>
+            <ul>
+              <li>Removes large conditional blocks.</li>
+              <li>Improves unit testing.</li>
+              <li>Adds new behavior without editing stable workflow.</li>
+              <li>Makes business policies explicit.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Cons</h3>
+            <ul>
+              <li>More classes or objects.</li>
+              <li>More wiring at runtime.</li>
+              <li>Can overcomplicate simple cases.</li>
+              <li>Bad strategy names can make code harder to navigate.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Business efficiency</h3>
+            <ul>
+              <li>Campaign rules can ship faster.</li>
+              <li>Provider changes are less risky.</li>
+              <li>Teams can own separate policy classes.</li>
+              <li>Regression tests become smaller and cheaper.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="metric"><b>1</b><p class="mini"><strong>Stable workflow:</strong> checkout, booking, or billing code calls one strategy method.</p></div>
+          <div class="metric"><b>2</b><p class="mini"><strong>Volatile rule:</strong> discount, tax, payment, or scoring changes in its own strategy.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Q and A">
+        <div class="slide-title">
+          <p class="eyebrow">Interview section 1</p>
+          <h2>Question and answer.</h2>
+        </div>
+        <div class="qa-layout">
+          <div class="question">
+            <h3 id="qaPrompt">Question</h3>
+            <div class="toolbar">
+              <button class="tab" id="prevQa">Previous</button>
+              <button class="tab" id="nextQa">Next</button>
+            </div>
+          </div>
+          <div class="answer-box" id="qaAnswer">Answer</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Scenario Q and A">
+        <div class="slide-title">
+          <p class="eyebrow">Interview section 2</p>
+          <h2>Scenario-based question and answer.</h2>
+        </div>
+        <div class="qa-layout">
+          <div class="question">
+            <h3 id="scenarioPrompt">Scenario</h3>
+            <div class="toolbar">
+              <button class="tab" id="prevScenario">Previous</button>
+              <button class="tab" id="nextScenario">Next</button>
+            </div>
+          </div>
+          <div class="answer-box" id="scenarioAnswer">Answer</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Problem Q and A">
+        <div class="slide-title">
+          <p class="eyebrow">Interview section 3</p>
+          <h2>Problem-solving question and answer.</h2>
+        </div>
+        <div class="qa-layout">
+          <div class="question">
+            <h3 id="problemPrompt">Problem</h3>
+            <div class="toolbar">
+              <button class="tab" id="prevProblem">Previous</button>
+              <button class="tab" id="nextProblem">Next</button>
+            </div>
+          </div>
+          <div class="answer-box" id="problemAnswer">Answer</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Quiz">
+        <div class="slide-title">
+          <p class="eyebrow">Interactive drill</p>
+          <h2>Choose the best design decision.</h2>
+        </div>
+        <div class="quiz-layout">
+          <div class="question">
+            <h3 id="quizPrompt">Prompt</h3>
+            <div class="choice-grid" id="quizChoices"></div>
+            <div class="toolbar">
+              <button class="tab" id="nextQuiz">Next question</button>
+            </div>
+          </div>
+          <div class="answer-box" id="quizAnswer">Pick an answer to see the reasoning.</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Revision">
+        <div class="slide-title">
+          <p class="eyebrow">Revision</p>
+          <h2>Memory hooks and files.</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Remember</h3>
+            <ul>
+              <li>Strategy is for interchangeable algorithms.</li>
+              <li>Context owns workflow, strategy owns variation.</li>
+              <li>It favors composition over inheritance.</li>
+              <li>It helps Open Closed Principle.</li>
+              <li>Use it when behavior changes often.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Revision files</h3>
+            <p class="mini">Markdown notes: <a class="notes-link" href="./revision-notes.md">revision-notes.md</a></p>
+            <p class="mini">PDF notes: <a class="notes-link" href="./revision-notes.pdf">revision-notes.pdf</a></p>
+          </div>
+        </div>
+        <div class="concept-box">
+          <h3>One-line interview answer</h3>
+          <p>"I use Strategy when the workflow is stable but the algorithm varies, so I can add or swap behavior without editing core business logic."</p>
+        </div>
+      </article>
+    </section>
+
+    <footer class="footer-nav">
+      <button class="icon-btn" id="prevSlide" aria-label="Previous slide">&lt;</button>
+      <div class="slide-count" id="slideCount">1 / 11</div>
+      <div class="toc" id="toc"></div>
+      <button class="icon-btn" id="nextSlide" aria-label="Next slide">&gt;</button>
+    </footer>
+  </main>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const progressBar = document.getElementById("progressBar");
+    const slideCount = document.getElementById("slideCount");
+    const toc = document.getElementById("toc");
+    let slideIndex = 0;
+
+    slides.forEach((slide, index) => {
+      const dot = document.createElement("button");
+      dot.className = "dot";
+      dot.type = "button";
+      dot.setAttribute("aria-label", `Go to ${slide.dataset.title}`);
+      dot.addEventListener("click", () => showSlide(index));
+      toc.appendChild(dot);
+    });
+
+    function showSlide(index) {
+      slideIndex = Math.max(0, Math.min(index, slides.length - 1));
+      slides.forEach((slide, i) => slide.classList.toggle("active", i === slideIndex));
+      Array.from(toc.children).forEach((dot, i) => dot.classList.toggle("active", i === slideIndex));
+      progressBar.style.width = `${((slideIndex + 1) / slides.length) * 100}%`;
+      slideCount.textContent = `${slideIndex + 1} / ${slides.length}`;
+    }
+
+    document.getElementById("prevSlide").addEventListener("click", () => showSlide(slideIndex - 1));
+    document.getElementById("nextSlide").addEventListener("click", () => showSlide(slideIndex + 1));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight") showSlide(slideIndex + 1);
+      if (event.key === "ArrowLeft") showSlide(slideIndex - 1);
+    });
+
+    const exampleData = {
+      discount: {
+        title: "Discount strategy",
+        text: `
+          <h3>Discount strategy</h3>
+          <p>The checkout workflow stays the same, but discount policy changes by customer type, coupon, campaign, or feature flag.</p>
+          <ul>
+            <li><strong>When:</strong> marketing changes rules frequently.</li>
+            <li><strong>Where:</strong> ecommerce checkout, subscription billing, loyalty programs.</li>
+            <li><strong>Benefit:</strong> new campaigns do not rewrite checkout.</li>
+          </ul>`,
+        js: `class NoDiscount {
+  calculate(cart) {
+    return 0;
+  }
+}
+
+class VipDiscount {
+  calculate(cart) {
+    return cart.total() * 0.20;
+  }
+}
+
+class CheckoutService {
+  constructor(discountStrategy) {
+    this.discountStrategy = discountStrategy;
+  }
+
+  payable(cart) {
+    return cart.total() - this.discountStrategy.calculate(cart);
+  }
+}
+
+const service = new CheckoutService(new VipDiscount());
+console.log(service.payable(cart));`,
+        java: `interface DiscountStrategy {
+  BigDecimal calculate(Cart cart);
+}
+
+class NoDiscount implements DiscountStrategy {
+  public BigDecimal calculate(Cart cart) {
+    return BigDecimal.ZERO;
+  }
+}
+
+class VipDiscount implements DiscountStrategy {
+  public BigDecimal calculate(Cart cart) {
+    return cart.total().multiply(new BigDecimal("0.20"));
+  }
+}
+
+class CheckoutService {
+  private final DiscountStrategy discountStrategy;
+
+  CheckoutService(DiscountStrategy discountStrategy) {
+    this.discountStrategy = discountStrategy;
+  }
+
+  BigDecimal payable(Cart cart) {
+    return cart.total().subtract(discountStrategy.calculate(cart));
+  }
+}`
+      },
+      payment: {
+        title: "Payment strategy",
+        text: `
+          <h3>Payment strategy</h3>
+          <p>Payment behavior changes by provider, but the order placement use case should not know each provider's SDK details.</p>
+          <ul>
+            <li><strong>When:</strong> card, wallet, bank transfer, and cash-on-delivery are alternatives.</li>
+            <li><strong>Where:</strong> checkout, invoices, refunds, subscriptions.</li>
+            <li><strong>Benefit:</strong> provider migration is safer.</li>
+          </ul>`,
+        js: `class CardPayment {
+  pay(amount) {
+    return { status: "paid", provider: "card", amount };
+  }
+}
+
+class WalletPayment {
+  pay(amount) {
+    return { status: "paid", provider: "wallet", amount };
+  }
+}
+
+class PaymentProcessor {
+  constructor(paymentStrategy) {
+    this.paymentStrategy = paymentStrategy;
+  }
+
+  collect(amount) {
+    return this.paymentStrategy.pay(amount);
+  }
+}`,
+        java: `interface PaymentStrategy {
+  PaymentResult pay(BigDecimal amount);
+}
+
+class CardPayment implements PaymentStrategy {
+  public PaymentResult pay(BigDecimal amount) {
+    return new PaymentResult("paid", "card", amount);
+  }
+}
+
+class WalletPayment implements PaymentStrategy {
+  public PaymentResult pay(BigDecimal amount) {
+    return new PaymentResult("paid", "wallet", amount);
+  }
+}
+
+class PaymentProcessor {
+  private final PaymentStrategy paymentStrategy;
+
+  PaymentProcessor(PaymentStrategy paymentStrategy) {
+    this.paymentStrategy = paymentStrategy;
+  }
+
+  PaymentResult collect(BigDecimal amount) {
+    return paymentStrategy.pay(amount);
+  }
+}`
+      },
+      shipping: {
+        title: "Shipping strategy",
+        text: `
+          <h3>Shipping strategy</h3>
+          <p>Shipping cost can depend on delivery speed, courier, distance, weight, region, or business contract.</p>
+          <ul>
+            <li><strong>When:</strong> multiple shipping formulas exist.</li>
+            <li><strong>Where:</strong> ecommerce, logistics, food delivery, booking apps.</li>
+            <li><strong>Benefit:</strong> add courier formulas without editing order workflow.</li>
+          </ul>`,
+        js: `class StandardShipping {
+  cost(order) {
+    return 60 + order.weightKg * 10;
+  }
+}
+
+class ExpressShipping {
+  cost(order) {
+    return 120 + order.weightKg * 25;
+  }
+}
+
+class ShippingQuoteService {
+  constructor(shippingStrategy) {
+    this.shippingStrategy = shippingStrategy;
+  }
+
+  quote(order) {
+    return this.shippingStrategy.cost(order);
+  }
+}`,
+        java: `interface ShippingStrategy {
+  BigDecimal cost(Order order);
+}
+
+class StandardShipping implements ShippingStrategy {
+  public BigDecimal cost(Order order) {
+    return BigDecimal.valueOf(60 + order.weightKg() * 10);
+  }
+}
+
+class ExpressShipping implements ShippingStrategy {
+  public BigDecimal cost(Order order) {
+    return BigDecimal.valueOf(120 + order.weightKg() * 25);
+  }
+}
+
+class ShippingQuoteService {
+  private final ShippingStrategy shippingStrategy;
+
+  ShippingQuoteService(ShippingStrategy shippingStrategy) {
+    this.shippingStrategy = shippingStrategy;
+  }
+
+  BigDecimal quote(Order order) {
+    return shippingStrategy.cost(order);
+  }
+}`
+      }
+    };
+
+    let activeExample = "discount";
+    let activeLang = "js";
+    const exampleText = document.getElementById("exampleText");
+    const exampleCode = document.getElementById("exampleCode");
+    const exampleCodeTitle = document.getElementById("exampleCodeTitle");
+
+    function renderExample() {
+      const data = exampleData[activeExample];
+      exampleText.innerHTML = data.text;
+      exampleCodeTitle.textContent = `${data.title} example`;
+      exampleCode.textContent = data[activeLang];
+    }
+
+    document.querySelectorAll("[data-example]").forEach(button => {
+      button.addEventListener("click", () => {
+        activeExample = button.dataset.example;
+        document.querySelectorAll("[data-example]").forEach(tab => tab.classList.toggle("active", tab === button));
+        renderExample();
+      });
+    });
+
+    document.querySelectorAll("[data-lang]").forEach(button => {
+      button.addEventListener("click", () => {
+        activeLang = button.dataset.lang;
+        document.querySelectorAll("[data-lang]").forEach(item => item.classList.toggle("active", item === button));
+        renderExample();
+      });
+    });
+
+    const qaItems = [
+      {
+        q: "What is the Strategy design pattern?",
+        a: "Strategy is a behavioral design pattern that defines a family of algorithms, encapsulates each one, and makes them interchangeable through a common contract."
+      },
+      {
+        q: "What problem does Strategy solve?",
+        a: "It solves the problem of changing behavior through large conditional blocks. Instead of editing the context every time a new algorithm appears, you add a new strategy."
+      },
+      {
+        q: "How is Strategy related to SOLID?",
+        a: "It supports Open Closed Principle because new behavior can be added without modifying the context. It also supports Dependency Inversion because the context depends on an abstraction."
+      },
+      {
+        q: "Strategy vs inheritance: what is the difference?",
+        a: "Inheritance fixes behavior through class hierarchy. Strategy uses composition, so behavior can be swapped at runtime and tested independently."
+      },
+      {
+        q: "What is the main downside of Strategy?",
+        a: "It can create extra classes and wiring. If there is only one simple algorithm, Strategy may be unnecessary ceremony."
+      }
+    ];
+
+    const scenarioItems = [
+      {
+        q: "A checkout system has VIP, new customer, coupon, and festival discounts inside one if/else block. What would you do?",
+        a: "Create a DiscountStrategy contract and implement VipDiscount, NewCustomerDiscount, CouponDiscount, and FestivalDiscount. Checkout calls strategy.calculate(cart, customer)."
+      },
+      {
+        q: "A payment service supports card today, but the business wants wallet and bank transfer next month. Is Strategy useful?",
+        a: "Yes. Define PaymentStrategy with pay(amount). Implement CardPayment, WalletPayment, and BankTransferPayment. The order workflow remains stable."
+      },
+      {
+        q: "A report system exports PDF, CSV, and XLSX using a switch statement. Which pattern helps?",
+        a: "Strategy. Define ExportStrategy with export(data). Add PdfExport, CsvExport, and XlsxExport. The report service chooses the strategy based on requested format."
+      },
+      {
+        q: "A simple admin page always sorts users by name. Should you apply Strategy?",
+        a: "Probably not. One stable algorithm does not need a strategy. Use direct code until real variation appears."
+      }
+    ];
+
+    const problemItems = [
+      {
+        q: "Problem: add a seasonal discount without changing CheckoutService. What design steps do you take?",
+        a: "Step 1: Extract DiscountStrategy. Step 2: Move existing discount rules to strategy classes. Step 3: Add SeasonalDiscount. Step 4: inject the selected strategy from a factory, config, or controller."
+      },
+      {
+        q: "Problem: test checkout without depending on real discount rules. How?",
+        a: "Inject a fake strategy: { calculate: () => 100 }. The checkout test verifies orchestration and payable amount without coupling to VIP, coupon, or campaign logic."
+      },
+      {
+        q: "Problem: choose payment strategy from user input safely. How?",
+        a: "Use a whitelist factory or registry. Map allowed values like card and wallet to known strategy instances. Do not instantiate arbitrary classes from raw input."
+      },
+      {
+        q: "Problem: two strategies share 80% of logic. What should you avoid?",
+        a: "Avoid copy-paste. Extract shared helper code or a base utility, but keep the strategy contract simple. Do not force inheritance if composition is clearer."
+      }
+    ];
+
+    function bindRotator(items, promptId, answerId, prevId, nextId) {
+      let index = 0;
+      const prompt = document.getElementById(promptId);
+      const answer = document.getElementById(answerId);
+      function render() {
+        prompt.textContent = items[index].q;
+        answer.innerHTML = `<strong>Answer:</strong><p>${items[index].a}</p>`;
+      }
+      document.getElementById(prevId).addEventListener("click", () => {
+        index = (index - 1 + items.length) % items.length;
+        render();
+      });
+      document.getElementById(nextId).addEventListener("click", () => {
+        index = (index + 1) % items.length;
+        render();
+      });
+      render();
+    }
+
+    const quiz = [
+      {
+        prompt: "Your class has a switch statement that chooses pricing by customer type. What is the best Strategy move?",
+        choices: ["Create one PricingStrategy per customer type", "Put all pricing in the controller", "Use inheritance for Customer only"],
+        answer: 0,
+        reason: "The algorithm varies by customer type, so each pricing rule can become an interchangeable strategy."
+      },
+      {
+        prompt: "There is only one tax formula and it is legally fixed. Should you create a TaxStrategy today?",
+        choices: ["No, keep it simple", "Yes, always use Strategy", "Move it into CSS"],
+        answer: 0,
+        reason: "Strategy is useful when variation exists or is likely. One stable formula can stay simple."
+      },
+      {
+        prompt: "Checkout creates new StripePayment() directly. What improves flexibility?",
+        choices: ["Inject a PaymentStrategy", "Duplicate checkout for each provider", "Use a global variable"],
+        answer: 0,
+        reason: "Injecting a strategy lets checkout depend on behavior, not a concrete provider."
+      }
+    ];
+
+    let quizIndex = 0;
+    const quizPrompt = document.getElementById("quizPrompt");
+    const quizChoices = document.getElementById("quizChoices");
+    const quizAnswer = document.getElementById("quizAnswer");
+
+    function renderQuiz() {
+      const current = quiz[quizIndex];
+      quizPrompt.textContent = current.prompt;
+      quizAnswer.textContent = "Pick an answer to see the reasoning.";
+      quizChoices.innerHTML = "";
+      current.choices.forEach((choice, index) => {
+        const button = document.createElement("button");
+        button.className = "choice-btn";
+        button.type = "button";
+        button.textContent = choice;
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".choice-btn").forEach(item => item.classList.remove("selected"));
+          button.classList.add("selected");
+          const correct = index === current.answer;
+          quizAnswer.innerHTML = `<strong>${correct ? "Correct." : "Not quite."}</strong><p>${current.reason}</p>`;
+        });
+        quizChoices.appendChild(button);
+      });
+    }
+
+    document.getElementById("nextQuiz").addEventListener("click", () => {
+      quizIndex = (quizIndex + 1) % quiz.length;
+      renderQuiz();
+    });
+
+    renderExample();
+    bindRotator(qaItems, "qaPrompt", "qaAnswer", "prevQa", "nextQa");
+    bindRotator(scenarioItems, "scenarioPrompt", "scenarioAnswer", "prevScenario", "nextScenario");
+    bindRotator(problemItems, "problemPrompt", "problemAnswer", "prevProblem", "nextProblem");
+    renderQuiz();
+    showSlide(0);
+  </script>
+</body>
+</html>

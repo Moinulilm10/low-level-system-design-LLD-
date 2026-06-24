@@ -1,0 +1,1455 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SOLID Principles Interactive Study Deck</title>
+  <style>
+    :root {
+      --bg: #f7f4ee;
+      --ink: #1f2328;
+      --muted: #5c6670;
+      --panel: #ffffff;
+      --line: #d9d5cd;
+      --red: #c84f3d;
+      --green: #2d7a5f;
+      --blue: #276a8f;
+      --gold: #9b6b1f;
+      --violet: #6a5a9c;
+      --code: #171b21;
+      --code-line: #2b323d;
+      --shadow: 0 18px 45px rgba(31, 35, 40, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      background:
+        linear-gradient(120deg, rgba(200, 79, 61, 0.08), transparent 28%),
+        linear-gradient(240deg, rgba(39, 106, 143, 0.1), transparent 30%),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    .deck-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.76);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 4;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: conic-gradient(from 180deg, var(--red), var(--gold), var(--green), var(--blue), var(--violet), var(--red));
+      border-radius: 8px;
+      font-weight: 900;
+      letter-spacing: 0;
+      flex: 0 0 auto;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(18px, 2.2vw, 30px);
+      line-height: 1.05;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .progress-wrap {
+      width: min(34vw, 360px);
+      height: 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+      background: #ebe6dd;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--blue), var(--gold));
+      transition: width 180ms ease;
+    }
+
+    .slide-stage {
+      width: min(1220px, 100%);
+      margin: 0 auto;
+      padding: 28px 22px 22px;
+      display: grid;
+      align-items: stretch;
+    }
+
+    .slide {
+      display: none;
+      min-height: calc(100vh - 154px);
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: clamp(22px, 4vw, 44px);
+      overflow: clip;
+      min-width: 0;
+    }
+
+    .slide.active {
+      display: grid;
+      gap: 24px;
+      align-content: start;
+    }
+
+    .slide-title {
+      display: grid;
+      gap: 10px;
+      max-width: 980px;
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--blue);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 12px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 64px);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    h4 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    p {
+      line-height: 1.55;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 22px);
+      max-width: 920px;
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-5 {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-5 {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .card,
+    .question,
+    .code-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      min-width: 0;
+    }
+
+    .card strong,
+    .question strong {
+      color: var(--ink);
+    }
+
+    .mini {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 6px 0 0;
+    }
+
+    .principle-card {
+      min-height: 210px;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      border-top: 6px solid var(--blue);
+    }
+
+    .principle-card:nth-child(1) { border-color: var(--red); }
+    .principle-card:nth-child(2) { border-color: var(--gold); }
+    .principle-card:nth-child(3) { border-color: var(--green); }
+    .principle-card:nth-child(4) { border-color: var(--blue); }
+    .principle-card:nth-child(5) { border-color: var(--violet); }
+
+    .letter {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 900;
+      background: var(--ink);
+    }
+
+    ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      line-height: 1.5;
+    }
+
+    li + li {
+      margin-top: 7px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .flow-node {
+      min-height: 110px;
+      display: grid;
+      align-content: center;
+      gap: 8px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      position: relative;
+    }
+
+    .flow-node::after {
+      content: ">";
+      position: absolute;
+      right: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .flow-node:last-child::after {
+      content: "";
+    }
+
+    .pill-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .tabbar,
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tab,
+    .icon-btn,
+    .choice-btn {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    .tab {
+      padding: 9px 13px;
+      font-weight: 800;
+    }
+
+    .tab:hover,
+    .icon-btn:hover,
+    .choice-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--blue);
+    }
+
+    .tab.active,
+    .choice-btn.selected {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    .principle-detail {
+      display: grid;
+      grid-template-columns: minmax(0, 0.84fr) minmax(0, 1.16fr);
+      gap: 18px;
+      align-items: start;
+      min-width: 0;
+    }
+
+    .concept-box {
+      border-left: 6px solid var(--green);
+      background: #fff;
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .code-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .segmented {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .segmented button {
+      border: 0;
+      background: transparent;
+      padding: 8px 12px;
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .segmented button.active {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    pre {
+      margin: 0;
+      overflow: auto;
+      max-width: 100%;
+      min-width: 0;
+      max-height: 430px;
+      color: #e7edf5;
+      background: var(--code);
+      border-radius: 8px;
+      padding: 16px;
+      line-height: 1.45;
+      font-size: 13px;
+      tab-size: 2;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    code {
+      font-family: "Cascadia Code", Consolas, "SFMono-Regular", ui-monospace, monospace;
+    }
+
+    pre code {
+      display: block;
+      min-width: 0;
+    }
+
+    .split-code {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .code-card {
+      padding: 12px;
+      background: #fff;
+    }
+
+    .code-card h4 {
+      margin: 0 0 8px;
+    }
+
+    .code-card.bad h4 {
+      color: var(--red);
+    }
+
+    .code-card.good h4 {
+      color: var(--green);
+    }
+
+    .business-map {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .metric {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .metric b {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background: rgba(45, 122, 95, 0.12);
+      color: var(--green);
+    }
+
+    .quiz-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 18px;
+      align-items: start;
+      min-width: 0;
+    }
+
+    .question {
+      display: grid;
+      gap: 12px;
+    }
+
+    .choice-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .choice-btn {
+      text-align: left;
+      padding: 12px;
+      width: 100%;
+    }
+
+    .answer-box {
+      min-height: 110px;
+      border-left: 6px solid var(--gold);
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px;
+      color: var(--muted);
+    }
+
+    .footer-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 22px 20px;
+      width: min(1220px, 100%);
+      margin: 0 auto;
+    }
+
+    .icon-btn {
+      width: 48px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .slide-count {
+      color: var(--muted);
+      font-weight: 800;
+      min-width: 88px;
+      text-align: center;
+    }
+
+    .toc {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      justify-content: center;
+      flex: 1;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid var(--muted);
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .dot.active {
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+
+    .notes-link {
+      color: var(--blue);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .check {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .check span {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(39, 106, 143, 0.12);
+      color: var(--blue);
+      font-weight: 900;
+    }
+
+    @media (max-width: 980px) {
+      .grid-5,
+      .grid-3,
+      .grid-2,
+      .principle-detail,
+      .business-map,
+      .quiz-layout,
+      .checklist,
+      .split-code {
+        grid-template-columns: 1fr;
+      }
+
+      .flow {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-node::after {
+        content: "v";
+        right: 50%;
+        top: auto;
+        bottom: -16px;
+        transform: translateX(50%);
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .progress-wrap {
+        width: 100%;
+      }
+
+      .slide {
+        min-height: calc(100vh - 210px);
+      }
+    }
+
+    @media (max-width: 620px) {
+      .slide-stage,
+      .footer-nav {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .slide {
+        padding: 18px;
+      }
+
+      .toc {
+        display: none;
+      }
+
+      pre {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">S</div>
+        <div>
+          <h1>SOLID Principles</h1>
+          <p>Interactive OOP study deck with JavaScript and Java examples</p>
+        </div>
+      </div>
+      <div class="progress-wrap" aria-label="Deck progress">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </header>
+
+    <section class="slide-stage" id="slideStage">
+      <article class="slide active" data-title="Start">
+        <div class="slide-title">
+          <p class="eyebrow">Low level design</p>
+          <h2>SOLID makes business code easier to change.</h2>
+          <p class="lead">Think of SOLID as five pressure valves for object-oriented design. Each principle reduces a different kind of change pain: mixed responsibilities, rigid inheritance, fragile abstractions, oversized interfaces, and hard-coded dependencies.</p>
+        </div>
+        <div class="flow">
+          <div class="flow-node"><strong>Requirement changes</strong><span class="mini">Discounts, payment, notifications, reporting.</span></div>
+          <div class="flow-node"><strong>Design pressure</strong><span class="mini">Classes grow and dependencies multiply.</span></div>
+          <div class="flow-node"><strong>SOLID choice</strong><span class="mini">Separate, extend, substitute, split, invert.</span></div>
+          <div class="flow-node"><strong>Business result</strong><span class="mini">Lower regression risk and faster releases.</span></div>
+          <div class="flow-node"><strong>Interview signal</strong><span class="mini">You can trade off design cost versus change cost.</span></div>
+        </div>
+        <div class="grid-3">
+          <div class="card"><h3>When to use</h3><p class="mini">Use SOLID when business rules change often, when code has many collaborators, or when testing setup feels painful.</p></div>
+          <div class="card"><h3>Where to use</h3><p class="mini">Best fit: services, domain models, use cases, integrations, repositories, policies, validators, and workflow orchestration.</p></div>
+          <div class="card"><h3>When to pause</h3><p class="mini">Avoid over-design for tiny scripts, throwaway prototypes, and stable data holders with no meaningful behavior.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Overview">
+        <div class="slide-title">
+          <p class="eyebrow">The acronym</p>
+          <h2>Five principles, five design questions.</h2>
+        </div>
+        <div class="grid-5">
+          <div class="card principle-card">
+            <div class="letter">S</div>
+            <h3>Single Responsibility</h3>
+            <p class="mini">Does this class have only one reason to change?</p>
+          </div>
+          <div class="card principle-card">
+            <div class="letter">O</div>
+            <h3>Open Closed</h3>
+            <p class="mini">Can new behavior be added without editing stable code?</p>
+          </div>
+          <div class="card principle-card">
+            <div class="letter">L</div>
+            <h3>Liskov Substitution</h3>
+            <p class="mini">Can every subtype safely replace its parent type?</p>
+          </div>
+          <div class="card principle-card">
+            <div class="letter">I</div>
+            <h3>Interface Segregation</h3>
+            <p class="mini">Do clients depend only on methods they actually use?</p>
+          </div>
+          <div class="card principle-card">
+            <div class="letter">D</div>
+            <h3>Dependency Inversion</h3>
+            <p class="mini">Does business logic depend on abstractions instead of concrete tools?</p>
+          </div>
+        </div>
+        <div class="concept-box">
+          <h3>Important interview framing</h3>
+          <p>SOLID is not a rule book for making more classes. It is a way to decide where change should be isolated. Strong answers mention the expected change, the cost of abstraction, and how the design improves testability or release safety.</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Principles">
+        <div class="slide-title">
+          <p class="eyebrow">Explore</p>
+          <h2>Pick a principle and inspect the design move.</h2>
+        </div>
+        <div class="tabbar" role="tablist" aria-label="SOLID principle tabs">
+          <button class="tab active" data-principle="srp">S: SRP</button>
+          <button class="tab" data-principle="ocp">O: OCP</button>
+          <button class="tab" data-principle="lsp">L: LSP</button>
+          <button class="tab" data-principle="isp">I: ISP</button>
+          <button class="tab" data-principle="dip">D: DIP</button>
+        </div>
+        <div class="principle-detail">
+          <div class="concept-box" id="principleText"></div>
+          <div class="code-card">
+            <div class="code-controls">
+              <h3 id="principleCodeTitle">Example</h3>
+              <div class="segmented" aria-label="Language selector">
+                <button class="active" data-lang="js">JS</button>
+                <button data-lang="java">Java</button>
+              </div>
+            </div>
+            <pre><code id="principleCode"></code></pre>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Before After">
+        <div class="slide-title">
+          <p class="eyebrow">Visualization</p>
+          <h2>One checkout flow before and after SOLID.</h2>
+          <p class="lead">A common business case: create an order, calculate discount, charge payment, send receipt, and persist the result.</p>
+        </div>
+        <div class="split-code">
+          <div class="code-card bad">
+            <h4>Before: one service knows everything</h4>
+<pre><code>class CheckoutService {
+  checkout(cart, customer) {
+    const total = cart.items.reduce(
+      (sum, item) => sum + item.price,
+      0
+    );
+
+    let discount = 0;
+    if (customer.type === "VIP") discount = total * 0.15;
+    if (customer.type === "NEW") discount = total * 0.05;
+
+    const payable = total - discount;
+
+    Stripe.charge(customer.card, payable);
+    Database.save({ cart, customer, payable });
+    Email.send(customer.email, "Receipt");
+
+    return payable;
+  }
+}</code></pre>
+          </div>
+          <div class="code-card good">
+            <h4>After: business policy is separated</h4>
+<pre><code>class CheckoutService {
+  constructor(
+    discountPolicy,
+    paymentGateway,
+    orderRepository,
+    notifier
+  ) {
+    this.discountPolicy = discountPolicy;
+    this.paymentGateway = paymentGateway;
+    this.orderRepository = orderRepository;
+    this.notifier = notifier;
+  }
+
+  checkout(cart, customer) {
+    const total = cart.total();
+    const discount = this.discountPolicy.discountFor(cart, customer);
+    const payable = total - discount;
+
+    this.paymentGateway.charge(
+      customer.paymentMethod,
+      payable
+    );
+    this.orderRepository.save({ cart, customer, payable });
+    this.notifier.receipt(customer, payable);
+
+    return payable;
+  }
+}</code></pre>
+          </div>
+        </div>
+        <div class="grid-3">
+          <div class="card"><h3>Change isolated</h3><p class="mini">A new discount rule changes a policy object, not payment or persistence code.</p></div>
+          <div class="card"><h3>Testing gets smaller</h3><p class="mini">Checkout tests can use fake dependencies and focus on orchestration.</p></div>
+          <div class="card"><h3>Business rules become visible</h3><p class="mini">Policies, gateways, repositories, and notifiers map to language the business understands.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="When Where">
+        <div class="slide-title">
+          <p class="eyebrow">Application</p>
+          <h2>When and where SOLID pays for itself.</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Use it when</h3>
+            <ul>
+              <li>Rules are expected to change: pricing, tax, eligibility, commission, fraud checks.</li>
+              <li>External tools can change: payment provider, email vendor, database, cache, queue.</li>
+              <li>You need unit tests around business behavior without real infrastructure.</li>
+              <li>Several teams touch the same module and regressions are expensive.</li>
+              <li>A class is becoming a "god object" with unrelated reasons to change.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Use it in</h3>
+            <ul>
+              <li>Domain services: checkout, billing, booking, inventory, loan approval.</li>
+              <li>Policy objects: discount, validation, authorization, scoring.</li>
+              <li>Application services: workflow coordination across multiple dependencies.</li>
+              <li>Adapters: database repositories, API clients, payment gateways.</li>
+              <li>Plugin-style features: reports, exporters, importers, notification channels.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-box">
+          <h3>Practical rule</h3>
+          <p>Start simple. Introduce abstractions at the boundary of repeated change. If the code changes once, a direct implementation is fine. If it changes for the third time in the same direction, the design is asking for a SOLID move.</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Pros Cons">
+        <div class="slide-title">
+          <p class="eyebrow">Tradeoffs</p>
+          <h2>Pros and cons you should say out loud.</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Pros</h3>
+            <ul>
+              <li>Lower regression risk because changes are localized.</li>
+              <li>Better testability because dependencies can be mocked or faked.</li>
+              <li>Cleaner business language because rules become named objects.</li>
+              <li>Easier extension because new strategies, adapters, and policies can be added.</li>
+              <li>More maintainable modules because responsibilities are smaller.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Cons</h3>
+            <ul>
+              <li>More classes, files, and indirection can slow beginners down.</li>
+              <li>Premature abstraction can hide simple logic behind ceremony.</li>
+              <li>Too many tiny interfaces can make navigation harder.</li>
+              <li>Bad abstractions become costly because many classes depend on them.</li>
+              <li>Runtime wiring or dependency injection can feel heavier in small apps.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="checklist">
+          <div class="check"><span>1</span><div><strong>Abstraction test</strong><p class="mini">Can you name the business variation? If yes, the abstraction may be worth it.</p></div></div>
+          <div class="check"><span>2</span><div><strong>Change test</strong><p class="mini">Will this code change independently from its neighbors? Separate it.</p></div></div>
+          <div class="check"><span>3</span><div><strong>Mock test</strong><p class="mini">Is unit testing blocked by a database, network, clock, or file system? Invert that dependency.</p></div></div>
+          <div class="check"><span>4</span><div><strong>Readability test</strong><p class="mini">If SOLID makes the simple path harder to read, wait until the design pressure is real.</p></div></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Business">
+        <div class="slide-title">
+          <p class="eyebrow">Business efficiency</p>
+          <h2>SOLID turns change into smaller work packages.</h2>
+        </div>
+        <div class="business-map">
+          <div class="card">
+            <h3>How it helps business logic</h3>
+            <ul>
+              <li>Rules can be reviewed in isolation by engineers and domain experts.</li>
+              <li>Feature flags and A/B pricing policies are easier to add as strategies.</li>
+              <li>Vendor migrations are safer because adapters contain infrastructure details.</li>
+              <li>Regression testing is cheaper because small units have clear contracts.</li>
+              <li>Teams can work in parallel when modules have stable boundaries.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Example: adding PayPal</h3>
+            <div class="metric"><b>O</b><p class="mini"><strong>Open Closed:</strong> add a <code>PaypalGateway</code> without editing checkout logic.</p></div>
+            <div class="metric"><b>D</b><p class="mini"><strong>Dependency Inversion:</strong> checkout depends on <code>PaymentGateway</code>, not Stripe.</p></div>
+            <div class="metric"><b>S</b><p class="mini"><strong>Single Responsibility:</strong> payment code changes separately from order creation.</p></div>
+          </div>
+        </div>
+        <div class="concept-box">
+          <h3>Business value sentence for interviews</h3>
+          <p>"I use SOLID to protect volatile business rules from infrastructure and unrelated workflow changes, so the team can ship policy updates quickly without retesting every external integration."</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Interviews">
+        <div class="slide-title">
+          <p class="eyebrow">Interview practice</p>
+          <h2>Questions, situations, and answer cues.</h2>
+        </div>
+        <div class="grid-2">
+          <div class="question">
+            <strong>Concept questions</strong>
+            <ul>
+              <li>Explain each SOLID principle with one business example.</li>
+              <li>What is the difference between SRP and separation of concerns?</li>
+              <li>How does OCP relate to the strategy pattern?</li>
+              <li>Why is LSP more than just inheritance syntax?</li>
+              <li>How do DIP and dependency injection differ?</li>
+            </ul>
+          </div>
+          <div class="question">
+            <strong>Situation questions</strong>
+            <ul>
+              <li>A checkout class calculates tax, charges card, saves orders, and sends email. Refactor it.</li>
+              <li>A report service has many <code>if type === ...</code> blocks. Add CSV without editing old logic.</li>
+              <li>A <code>ReadOnlyFile</code> inherits from <code>File</code> but throws on <code>write()</code>. Identify the problem.</li>
+              <li>A printer interface forces scanner-only devices to implement <code>print()</code>. Fix the design.</li>
+              <li>An order service creates <code>new StripeClient()</code> inside methods. Make it testable.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-box">
+          <h3>Strong answer pattern</h3>
+          <p>Describe the smell, name the principle, identify the volatile dependency or rule, show a smaller abstraction, and mention the tradeoff. Example: "This violates DIP because checkout owns Stripe creation. I would depend on a PaymentGateway abstraction and inject a Stripe implementation. That makes tests faster and lets us add PayPal later, but I would avoid this abstraction if we know the product will only ever use one provider."</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Quiz">
+        <div class="slide-title">
+          <p class="eyebrow">Interactive drill</p>
+          <h2>Choose the principle violated by each scenario.</h2>
+        </div>
+        <div class="quiz-layout">
+          <div class="question">
+            <h3 id="quizPrompt">Prompt</h3>
+            <div class="choice-grid" id="quizChoices"></div>
+            <div class="toolbar">
+              <button class="tab" id="nextQuestion">Next question</button>
+            </div>
+          </div>
+          <div class="answer-box" id="quizAnswer">
+            Pick an answer to see the reasoning.
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Revision">
+        <div class="slide-title">
+          <p class="eyebrow">Revision notes</p>
+          <h2>Quick memory hooks.</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>One-line definitions</h3>
+            <ul>
+              <li><strong>SRP:</strong> one reason to change.</li>
+              <li><strong>OCP:</strong> open for extension, closed for modification.</li>
+              <li><strong>LSP:</strong> subtype must honor parent behavior.</li>
+              <li><strong>ISP:</strong> small client-specific interfaces.</li>
+              <li><strong>DIP:</strong> high-level policy depends on abstractions.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Smell to principle map</h3>
+            <ul>
+              <li>God class: SRP.</li>
+              <li>Repeated type checks: OCP.</li>
+              <li>Subclass throws unsupported errors: LSP.</li>
+              <li>Fat interface with empty methods: ISP.</li>
+              <li>Business service creates infrastructure clients: DIP.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-box">
+          <h3>Further revision</h3>
+          <p>A detailed Markdown revision sheet is included next to this deck: <a class="notes-link" href="./revision-notes.md">revision-notes.md</a>.</p>
+        </div>
+      </article>
+    </section>
+
+    <footer class="footer-nav">
+      <button class="icon-btn" id="prevSlide" aria-label="Previous slide">&lt;</button>
+      <div class="slide-count" id="slideCount">1 / 9</div>
+      <div class="toc" id="toc"></div>
+      <button class="icon-btn" id="nextSlide" aria-label="Next slide">&gt;</button>
+    </footer>
+  </main>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const progressBar = document.getElementById("progressBar");
+    const slideCount = document.getElementById("slideCount");
+    const toc = document.getElementById("toc");
+    let slideIndex = 0;
+
+    slides.forEach((slide, index) => {
+      const dot = document.createElement("button");
+      dot.className = "dot";
+      dot.type = "button";
+      dot.setAttribute("aria-label", `Go to ${slide.dataset.title}`);
+      dot.addEventListener("click", () => showSlide(index));
+      toc.appendChild(dot);
+    });
+
+    function showSlide(index) {
+      slideIndex = Math.max(0, Math.min(index, slides.length - 1));
+      slides.forEach((slide, i) => slide.classList.toggle("active", i === slideIndex));
+      Array.from(toc.children).forEach((dot, i) => dot.classList.toggle("active", i === slideIndex));
+      progressBar.style.width = `${((slideIndex + 1) / slides.length) * 100}%`;
+      slideCount.textContent = `${slideIndex + 1} / ${slides.length}`;
+    }
+
+    document.getElementById("prevSlide").addEventListener("click", () => showSlide(slideIndex - 1));
+    document.getElementById("nextSlide").addEventListener("click", () => showSlide(slideIndex + 1));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight") showSlide(slideIndex + 1);
+      if (event.key === "ArrowLeft") showSlide(slideIndex - 1);
+    });
+
+    const principleData = {
+      srp: {
+        title: "Single Responsibility Principle",
+        text: `
+          <h3>SRP: one reason to change</h3>
+          <p>A class should have one primary responsibility. This does not mean one method. It means one axis of change.</p>
+          <ul>
+            <li><strong>Use when:</strong> one class mixes business rules, persistence, formatting, and communication.</li>
+            <li><strong>Where:</strong> domain services, validators, repositories, formatters, notification classes.</li>
+            <li><strong>Business effect:</strong> changing email wording should not risk discount calculation.</li>
+          </ul>`,
+        js: `class InvoiceCalculator {
+  total(items) {
+    return items.reduce((sum, item) => sum + item.price * item.qty, 0);
+  }
+}
+
+class InvoiceRepository {
+  save(invoice) {
+    // database write lives here
+  }
+}
+
+class InvoiceEmailer {
+  send(invoice) {
+    // email formatting and delivery live here
+  }
+}
+
+class InvoiceService {
+  constructor(calculator, repository, emailer) {
+    this.calculator = calculator;
+    this.repository = repository;
+    this.emailer = emailer;
+  }
+
+  create(items, customer) {
+    const invoice = { customer, total: this.calculator.total(items) };
+    this.repository.save(invoice);
+    this.emailer.send(invoice);
+    return invoice;
+  }
+}`,
+        java: `class InvoiceCalculator {
+  BigDecimal total(List<LineItem> items) {
+    return items.stream()
+      .map(item -> item.price().multiply(BigDecimal.valueOf(item.qty())))
+      .reduce(BigDecimal.ZERO, BigDecimal::add);
+  }
+}
+
+class InvoiceRepository {
+  void save(Invoice invoice) {
+    // database write lives here
+  }
+}
+
+class InvoiceEmailer {
+  void send(Invoice invoice) {
+    // email formatting and delivery live here
+  }
+}
+
+class InvoiceService {
+  private final InvoiceCalculator calculator;
+  private final InvoiceRepository repository;
+  private final InvoiceEmailer emailer;
+
+  InvoiceService(InvoiceCalculator calculator, InvoiceRepository repository, InvoiceEmailer emailer) {
+    this.calculator = calculator;
+    this.repository = repository;
+    this.emailer = emailer;
+  }
+}`
+      },
+      ocp: {
+        title: "Open Closed Principle",
+        text: `
+          <h3>OCP: extend without editing stable code</h3>
+          <p>Classes should be open for extension but closed for modification. Use polymorphism or strategies instead of editing a central if/else chain every time a new type appears.</p>
+          <ul>
+            <li><strong>Use when:</strong> new variants keep arriving.</li>
+            <li><strong>Where:</strong> discounts, tax rules, report exporters, payment methods.</li>
+            <li><strong>Business effect:</strong> add a new campaign by adding a policy class.</li>
+          </ul>`,
+        js: `class VipDiscount {
+  calculate(order) {
+    return order.total * 0.15;
+  }
+}
+
+class NewCustomerDiscount {
+  calculate(order) {
+    return order.total * 0.05;
+  }
+}
+
+class DiscountEngine {
+  constructor(policies) {
+    this.policies = policies;
+  }
+
+  discountFor(order) {
+    return this.policies
+      .map(policy => policy.calculate(order))
+      .reduce((best, value) => Math.max(best, value), 0);
+  }
+}
+
+const engine = new DiscountEngine([
+  new VipDiscount(),
+  new NewCustomerDiscount()
+]);`,
+        java: `interface DiscountPolicy {
+  BigDecimal calculate(Order order);
+}
+
+class VipDiscount implements DiscountPolicy {
+  public BigDecimal calculate(Order order) {
+    return order.total().multiply(new BigDecimal("0.15"));
+  }
+}
+
+class NewCustomerDiscount implements DiscountPolicy {
+  public BigDecimal calculate(Order order) {
+    return order.total().multiply(new BigDecimal("0.05"));
+  }
+}
+
+class DiscountEngine {
+  private final List<DiscountPolicy> policies;
+
+  DiscountEngine(List<DiscountPolicy> policies) {
+    this.policies = policies;
+  }
+
+  BigDecimal discountFor(Order order) {
+    return policies.stream()
+      .map(policy -> policy.calculate(order))
+      .max(BigDecimal::compareTo)
+      .orElse(BigDecimal.ZERO);
+  }
+}`
+      },
+      lsp: {
+        title: "Liskov Substitution Principle",
+        text: `
+          <h3>LSP: subtype must be safely substitutable</h3>
+          <p>If code expects a parent type, every child type must behave according to the same contract. A subclass should not surprise callers by weakening promises or throwing unsupported behavior.</p>
+          <ul>
+            <li><strong>Use when:</strong> inheritance feels convenient but behavior is not truly shared.</li>
+            <li><strong>Where:</strong> domain hierarchies, file abstractions, accounts, shapes, user roles.</li>
+            <li><strong>Business effect:</strong> fewer runtime surprises from invalid substitutions.</li>
+          </ul>`,
+        js: `class WithdrawableAccount {
+  withdraw(amount) {
+    throw new Error("Implement withdraw");
+  }
+}
+
+class CheckingAccount extends WithdrawableAccount {
+  withdraw(amount) {
+    this.balance -= amount;
+  }
+}
+
+// Fixed deposit should not inherit withdrawable behavior
+// if early withdrawal is forbidden.
+class FixedDepositAccount {
+  addInterest() {
+    this.balance *= 1.06;
+  }
+}
+
+function processWithdrawal(account, amount) {
+  account.withdraw(amount);
+}`,
+        java: `interface WithdrawableAccount {
+  void withdraw(BigDecimal amount);
+}
+
+class CheckingAccount implements WithdrawableAccount {
+  public void withdraw(BigDecimal amount) {
+    balance = balance.subtract(amount);
+  }
+}
+
+// FixedDepositAccount is not forced into a false subtype.
+class FixedDepositAccount {
+  void addInterest() {
+    balance = balance.multiply(new BigDecimal("1.06"));
+  }
+}
+
+class AtmService {
+  void processWithdrawal(WithdrawableAccount account, BigDecimal amount) {
+    account.withdraw(amount);
+  }
+}`
+      },
+      isp: {
+        title: "Interface Segregation Principle",
+        text: `
+          <h3>ISP: split fat interfaces</h3>
+          <p>Clients should not be forced to depend on methods they do not use. Prefer smaller role-based contracts over one giant interface.</p>
+          <ul>
+            <li><strong>Use when:</strong> classes implement empty methods or throw "not supported".</li>
+            <li><strong>Where:</strong> device capabilities, repository operations, user permissions, document workflows.</li>
+            <li><strong>Business effect:</strong> new clients adopt only the contract they need.</li>
+          </ul>`,
+        js: `class Printer {
+  print(document) {}
+}
+
+class Scanner {
+  scan() {}
+}
+
+class MultiFunctionDevice {
+  constructor(printer, scanner) {
+    this.printer = printer;
+    this.scanner = scanner;
+  }
+
+  print(document) {
+    this.printer.print(document);
+  }
+
+  scan() {
+    return this.scanner.scan();
+  }
+}
+
+function copy(scanner, printer) {
+  printer.print(scanner.scan());
+}`,
+        java: `interface Printer {
+  void print(Document document);
+}
+
+interface Scanner {
+  Document scan();
+}
+
+class MultiFunctionDevice implements Printer, Scanner {
+  public void print(Document document) {
+    // print document
+  }
+
+  public Document scan() {
+    return new Document();
+  }
+}
+
+class CopyService {
+  void copy(Scanner scanner, Printer printer) {
+    printer.print(scanner.scan());
+  }
+}`
+      },
+      dip: {
+        title: "Dependency Inversion Principle",
+        text: `
+          <h3>DIP: business policy depends on abstractions</h3>
+          <p>High-level modules should not depend directly on low-level details. Both should depend on abstractions. This is the design principle behind dependency injection.</p>
+          <ul>
+            <li><strong>Use when:</strong> business code constructs databases, HTTP clients, gateways, or clocks.</li>
+            <li><strong>Where:</strong> application services, controllers, domain workflows, infrastructure boundaries.</li>
+            <li><strong>Business effect:</strong> provider changes do not rewrite core business rules.</li>
+          </ul>`,
+        js: `class OrderService {
+  constructor(paymentGateway, orderRepository) {
+    this.paymentGateway = paymentGateway;
+    this.orderRepository = orderRepository;
+  }
+
+  place(order) {
+    this.paymentGateway.charge(order.paymentMethod, order.total);
+    this.orderRepository.save(order);
+  }
+}
+
+class StripeGateway {
+  charge(paymentMethod, amount) {
+    // Stripe API call
+  }
+}
+
+class SqlOrderRepository {
+  save(order) {
+    // SQL insert
+  }
+}`,
+        java: `interface PaymentGateway {
+  void charge(PaymentMethod paymentMethod, BigDecimal amount);
+}
+
+interface OrderRepository {
+  void save(Order order);
+}
+
+class OrderService {
+  private final PaymentGateway paymentGateway;
+  private final OrderRepository orderRepository;
+
+  OrderService(PaymentGateway paymentGateway, OrderRepository orderRepository) {
+    this.paymentGateway = paymentGateway;
+    this.orderRepository = orderRepository;
+  }
+
+  void place(Order order) {
+    paymentGateway.charge(order.paymentMethod(), order.total());
+    orderRepository.save(order);
+  }
+}`
+      }
+    };
+
+    let activePrinciple = "srp";
+    let activeLang = "js";
+    const principleText = document.getElementById("principleText");
+    const principleCode = document.getElementById("principleCode");
+    const principleCodeTitle = document.getElementById("principleCodeTitle");
+
+    function renderPrinciple() {
+      const data = principleData[activePrinciple];
+      principleText.innerHTML = data.text;
+      principleCodeTitle.textContent = `${data.title} example`;
+      principleCode.textContent = data[activeLang];
+    }
+
+    document.querySelectorAll("[data-principle]").forEach(button => {
+      button.addEventListener("click", () => {
+        activePrinciple = button.dataset.principle;
+        document.querySelectorAll("[data-principle]").forEach(tab => tab.classList.toggle("active", tab === button));
+        renderPrinciple();
+      });
+    });
+
+    document.querySelectorAll("[data-lang]").forEach(button => {
+      button.addEventListener("click", () => {
+        activeLang = button.dataset.lang;
+        document.querySelectorAll("[data-lang]").forEach(item => item.classList.toggle("active", item === button));
+        renderPrinciple();
+      });
+    });
+
+    const quiz = [
+      {
+        prompt: "A ProductService validates input, formats CSV, writes to SQL, and sends Slack alerts.",
+        answer: "SRP",
+        reason: "It has multiple reasons to change: validation rules, export format, persistence, and notification delivery."
+      },
+      {
+        prompt: "Every new report type requires editing a large switch statement inside ReportGenerator.",
+        answer: "OCP",
+        reason: "The generator is not closed for modification. Use report strategy/exporter classes."
+      },
+      {
+        prompt: "Square extends Rectangle, but setWidth and setHeight break expected rectangle behavior.",
+        answer: "LSP",
+        reason: "A Square cannot safely replace Rectangle if callers expect width and height to vary independently."
+      },
+      {
+        prompt: "A BasicPrinter must implement scan, fax, email, and staple methods even though it only prints.",
+        answer: "ISP",
+        reason: "The interface is too large. Split by capability: Printer, Scanner, FaxMachine."
+      },
+      {
+        prompt: "BillingService creates new StripeClient and new MySqlConnection inside chargeCustomer().",
+        answer: "DIP",
+        reason: "High-level billing policy depends on low-level concrete infrastructure. Inject abstractions."
+      }
+    ];
+
+    let quizIndex = 0;
+    const quizPrompt = document.getElementById("quizPrompt");
+    const quizChoices = document.getElementById("quizChoices");
+    const quizAnswer = document.getElementById("quizAnswer");
+    const choices = ["SRP", "OCP", "LSP", "ISP", "DIP"];
+
+    function renderQuiz() {
+      const current = quiz[quizIndex];
+      quizPrompt.textContent = current.prompt;
+      quizAnswer.textContent = "Pick an answer to see the reasoning.";
+      quizChoices.innerHTML = "";
+      choices.forEach(choice => {
+        const button = document.createElement("button");
+        button.className = "choice-btn";
+        button.type = "button";
+        button.textContent = choice;
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".choice-btn").forEach(item => item.classList.remove("selected"));
+          button.classList.add("selected");
+          const isCorrect = choice === current.answer;
+          quizAnswer.innerHTML = `<strong>${isCorrect ? "Correct." : "Not quite."}</strong><p>${current.reason}</p><p><strong>Answer:</strong> ${current.answer}</p>`;
+        });
+        quizChoices.appendChild(button);
+      });
+    }
+
+    document.getElementById("nextQuestion").addEventListener("click", () => {
+      quizIndex = (quizIndex + 1) % quiz.length;
+      renderQuiz();
+    });
+
+    renderPrinciple();
+    renderQuiz();
+    showSlide(0);
+  </script>
+</body>
+</html>
