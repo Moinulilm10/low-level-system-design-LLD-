@@ -1,0 +1,1190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Factory Design Pattern Interactive Deck</title>
+  <style>
+    :root {
+      --bg: #f5f2ec;
+      --ink: #20242a;
+      --muted: #5d6672;
+      --panel: #ffffff;
+      --line: #d9d2c7;
+      --red: #c44d3f;
+      --green: #28775d;
+      --blue: #28698d;
+      --gold: #94691f;
+      --violet: #66539a;
+      --code: #151a21;
+      --shadow: 0 18px 42px rgba(32, 36, 42, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      background:
+        linear-gradient(130deg, rgba(196, 77, 63, 0.08), transparent 28%),
+        linear-gradient(240deg, rgba(40, 105, 141, 0.1), transparent 32%),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button { font: inherit; }
+
+    .deck-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.84);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 900;
+      background: conic-gradient(from 150deg, var(--gold), var(--green), var(--blue), var(--violet), var(--red), var(--gold));
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(18px, 2.2vw, 30px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .progress-wrap {
+      width: min(34vw, 360px);
+      height: 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #ebe5dc;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--blue), var(--gold));
+      transition: width 160ms ease;
+    }
+
+    .slide-stage {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      padding: 26px 22px 20px;
+      display: grid;
+      align-items: stretch;
+    }
+
+    .slide {
+      display: none;
+      min-height: calc(100vh - 154px);
+      padding: clamp(22px, 3.8vw, 42px);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: var(--shadow);
+      overflow: clip;
+      min-width: 0;
+    }
+
+    .slide.active {
+      display: grid;
+      gap: 22px;
+      align-content: start;
+    }
+
+    .slide-title {
+      display: grid;
+      gap: 10px;
+      max-width: 980px;
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 64px);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    h4 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    p { line-height: 1.55; }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 22px);
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .card,
+    .question,
+    .code-card,
+    .diagram-node {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 18px;
+    }
+
+    .mini {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    ul,
+    ol {
+      margin: 8px 0 0;
+      padding-left: 19px;
+      line-height: 1.5;
+    }
+
+    li + li { margin-top: 7px; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .diagram-node {
+      min-height: 126px;
+      display: grid;
+      align-content: center;
+      gap: 8px;
+      border-top: 6px solid var(--blue);
+      position: relative;
+    }
+
+    .diagram-node:nth-child(2) { border-top-color: var(--gold); }
+    .diagram-node:nth-child(3) { border-top-color: var(--green); }
+    .diagram-node:nth-child(4) { border-top-color: var(--violet); }
+
+    .diagram-node::after {
+      content: ">";
+      position: absolute;
+      right: -13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .diagram-node:last-child::after { content: ""; }
+
+    .concept-box {
+      min-width: 0;
+      border-left: 6px solid var(--green);
+      border-radius: 8px;
+      background: #fff;
+      padding: 18px;
+    }
+
+    .factory-map,
+    .qa-layout,
+    .quiz-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 18px;
+      align-items: start;
+      min-width: 0;
+    }
+
+    .tabbar,
+    .toolbar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tab,
+    .icon-btn,
+    .choice-btn {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    .tab {
+      padding: 9px 13px;
+      font-weight: 850;
+    }
+
+    .tab:hover,
+    .icon-btn:hover,
+    .choice-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--blue);
+    }
+
+    .tab.active,
+    .choice-btn.selected {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff;
+    }
+
+    .segmented {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .segmented button {
+      border: 0;
+      background: transparent;
+      padding: 8px 12px;
+      color: var(--muted);
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .segmented button.active {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .code-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    pre {
+      margin: 0;
+      max-width: 100%;
+      min-width: 0;
+      max-height: 430px;
+      overflow: auto;
+      padding: 16px;
+      border-radius: 8px;
+      color: #e8eef6;
+      background: var(--code);
+      font-size: 13px;
+      line-height: 1.45;
+      tab-size: 2;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    code {
+      font-family: "Cascadia Code", Consolas, "SFMono-Regular", ui-monospace, monospace;
+    }
+
+    pre code {
+      display: block;
+      min-width: 0;
+    }
+
+    .split-code {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .bad h4 { color: var(--red); }
+    .good h4 { color: var(--green); }
+
+    .metric {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .metric b {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      color: var(--green);
+      background: rgba(40, 119, 93, 0.12);
+    }
+
+    .question {
+      display: grid;
+      gap: 10px;
+    }
+
+    .choice-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .choice-btn {
+      width: 100%;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .answer-box {
+      min-height: 138px;
+      padding: 16px;
+      border-left: 6px solid var(--gold);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+    }
+
+    .notes-link {
+      color: var(--blue);
+      font-weight: 850;
+      text-decoration: none;
+    }
+
+    .footer-nav {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      padding: 14px 22px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      width: 48px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .slide-count {
+      min-width: 92px;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .toc {
+      display: flex;
+      flex: 1;
+      gap: 7px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      padding: 0;
+      border: 1px solid var(--muted);
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .dot.active {
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+
+    @media (max-width: 980px) {
+      .grid-2,
+      .grid-3,
+      .grid-4,
+      .flow,
+      .factory-map,
+      .split-code,
+      .qa-layout,
+      .quiz-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .diagram-node::after {
+        content: "v";
+        right: 50%;
+        top: auto;
+        bottom: -16px;
+        transform: translateX(50%);
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .progress-wrap { width: 100%; }
+      .slide { min-height: calc(100vh - 210px); }
+    }
+
+    @media (max-width: 620px) {
+      .slide-stage,
+      .footer-nav {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .slide { padding: 18px; }
+      .toc { display: none; }
+      pre { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">F</div>
+        <div>
+          <h1>Factory Design Pattern</h1>
+          <p>Interactive deck with JavaScript and Java examples</p>
+        </div>
+      </div>
+      <div class="progress-wrap" aria-label="Deck progress">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </header>
+
+    <section class="slide-stage">
+      <article class="slide active" data-title="Start">
+        <div class="slide-title">
+          <p class="eyebrow">Creational design pattern</p>
+          <h2>Factory centralizes object creation so business code stays clean.</h2>
+          <p class="lead">The Factory pattern hides creation logic behind a method, class, or interface. The caller asks for an object by intent, and the factory decides which concrete class to create.</p>
+        </div>
+        <div class="flow">
+          <div class="diagram-node"><strong>Client need</strong><span class="mini">"Create a notification sender", "Create a payment gateway".</span></div>
+          <div class="diagram-node"><strong>Factory</strong><span class="mini">Chooses the right class and construction details.</span></div>
+          <div class="diagram-node"><strong>Product</strong><span class="mini">Concrete object such as EmailSender or StripeGateway.</span></div>
+          <div class="diagram-node"><strong>Business service</strong><span class="mini">Uses the product through a stable contract.</span></div>
+        </div>
+        <div class="grid-3">
+          <div class="card"><h3>Main idea</h3><p class="mini">Move object creation decisions out of business workflow.</p></div>
+          <div class="card"><h3>Design goal</h3><p class="mini">Business services depend on what they need, not how it is constructed.</p></div>
+          <div class="card"><h3>Interview signal</h3><p class="mini">You can separate creation complexity from domain behavior.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Types">
+        <div class="slide-title">
+          <p class="eyebrow">Factory family</p>
+          <h2>Factory has three common forms.</h2>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Simple Factory</h3>
+            <p class="mini">A method or class creates products based on input. It is practical, common, and easy to understand, but not always considered a formal GoF pattern.</p>
+          </div>
+          <div class="card">
+            <h3>Factory Method</h3>
+            <p class="mini">A base class defines a creation method, and subclasses decide which product to instantiate.</p>
+          </div>
+          <div class="card">
+            <h3>Abstract Factory</h3>
+            <p class="mini">A factory creates families of related products, such as UI controls for web and mobile themes.</p>
+          </div>
+        </div>
+        <div class="concept-box">
+          <h3>Practical rule</h3>
+          <p>Use Simple Factory for straightforward selection, Factory Method when subclasses should control creation, and Abstract Factory when products must be created as a compatible family.</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Examples">
+        <div class="slide-title">
+          <p class="eyebrow">Interactive example</p>
+          <h2>Choose a factory type and language.</h2>
+        </div>
+        <div class="tabbar" role="tablist" aria-label="Factory examples">
+          <button class="tab active" data-example="simple">Simple Factory</button>
+          <button class="tab" data-example="method">Factory Method</button>
+          <button class="tab" data-example="abstract">Abstract Factory</button>
+        </div>
+        <div class="factory-map">
+          <div class="concept-box" id="exampleText"></div>
+          <div class="code-card">
+            <div class="code-controls">
+              <h3 id="exampleCodeTitle">Example</h3>
+              <div class="segmented" aria-label="Language selector">
+                <button class="active" data-lang="js">JS</button>
+                <button data-lang="java">Java</button>
+              </div>
+            </div>
+            <pre><code id="exampleCode"></code></pre>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Before After">
+        <div class="slide-title">
+          <p class="eyebrow">Before and after</p>
+          <h2>Replace scattered constructors with one creation boundary.</h2>
+          <p class="lead">Here an order service should not know how every notification channel is constructed.</p>
+        </div>
+        <div class="split-code">
+          <div class="code-card bad">
+            <h4>Before: creation mixed with workflow</h4>
+            <pre><code>class OrderService {
+  confirm(order, channel) {
+    let sender;
+
+    if (channel === "email") {
+      sender = new EmailSender(process.env.SMTP_KEY);
+    } else if (channel === "sms") {
+      sender = new SmsSender(process.env.SMS_TOKEN);
+    } else {
+      sender = new PushSender(process.env.PUSH_KEY);
+    }
+
+    sender.send(order.customer, "Order confirmed");
+  }
+}</code></pre>
+          </div>
+          <div class="code-card good">
+            <h4>After: factory owns creation</h4>
+            <pre><code>class NotificationFactory {
+  static create(channel) {
+    const creators = {
+      email: () => new EmailSender(Config.smtpKey),
+      sms: () => new SmsSender(Config.smsToken),
+      push: () => new PushSender(Config.pushKey)
+    };
+
+    return (creators[channel] || creators.email)();
+  }
+}
+
+class OrderService {
+  confirm(order, channel) {
+    const sender = NotificationFactory.create(channel);
+    sender.send(order.customer, "Order confirmed");
+  }
+}</code></pre>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="When Where">
+        <div class="slide-title">
+          <p class="eyebrow">Usage</p>
+          <h2>When and where Factory works best.</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Use Factory when</h3>
+            <ul>
+              <li>Object creation has conditions, configuration, or setup steps.</li>
+              <li>The caller should not know concrete class names.</li>
+              <li>You need to choose a product based on request, tenant, provider, or environment.</li>
+              <li>You want to keep constructors out of business services.</li>
+              <li>Related objects must be created consistently.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Use Factory in</h3>
+            <ul>
+              <li>Payment gateway selection.</li>
+              <li>Notification sender creation.</li>
+              <li>Report exporter creation.</li>
+              <li>Database or cache client creation.</li>
+              <li>UI component families and platform-specific services.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-box">
+          <h3>Do not force it</h3>
+          <p>If construction is a single obvious <code>new</code> with no branching, setup, or future variation, direct construction is clearer.</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Pros Cons">
+        <div class="slide-title">
+          <p class="eyebrow">Tradeoffs</p>
+          <h2>Pros, cons, and business efficiency.</h2>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Pros</h3>
+            <ul>
+              <li>Centralizes creation logic.</li>
+              <li>Reduces coupling to concrete classes.</li>
+              <li>Improves test setup and replacement.</li>
+              <li>Makes provider selection explicit.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Cons</h3>
+            <ul>
+              <li>Adds extra classes or methods.</li>
+              <li>Can hide too much if factory names are vague.</li>
+              <li>Simple factories can grow into large switch statements.</li>
+              <li>Incorrect factory ownership can create a service locator smell.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Business efficiency</h3>
+            <ul>
+              <li>Provider changes happen in one place.</li>
+              <li>Tenant-specific setup is easier.</li>
+              <li>Release risk drops around integrations.</li>
+              <li>Services focus on business workflow.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="metric"><b>1</b><p class="mini"><strong>Stable service:</strong> order, billing, or reporting code asks for a product by intent.</p></div>
+          <div class="metric"><b>2</b><p class="mini"><strong>Volatile creation:</strong> constructor args, credentials, provider choice, and setup are isolated.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Q and A">
+        <div class="slide-title">
+          <p class="eyebrow">Interview section 1</p>
+          <h2>Question and answer.</h2>
+        </div>
+        <div class="qa-layout">
+          <div class="question">
+            <h3 id="qaPrompt">Question</h3>
+            <div class="toolbar">
+              <button class="tab" id="prevQa">Previous</button>
+              <button class="tab" id="nextQa">Next</button>
+            </div>
+          </div>
+          <div class="answer-box" id="qaAnswer">Answer</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Scenario Q and A">
+        <div class="slide-title">
+          <p class="eyebrow">Interview section 2</p>
+          <h2>Scenario-based question and answer.</h2>
+        </div>
+        <div class="qa-layout">
+          <div class="question">
+            <h3 id="scenarioPrompt">Scenario</h3>
+            <div class="toolbar">
+              <button class="tab" id="prevScenario">Previous</button>
+              <button class="tab" id="nextScenario">Next</button>
+            </div>
+          </div>
+          <div class="answer-box" id="scenarioAnswer">Answer</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Problem Q and A">
+        <div class="slide-title">
+          <p class="eyebrow">Interview section 3</p>
+          <h2>Problem-solving question and answer.</h2>
+        </div>
+        <div class="qa-layout">
+          <div class="question">
+            <h3 id="problemPrompt">Problem</h3>
+            <div class="toolbar">
+              <button class="tab" id="prevProblem">Previous</button>
+              <button class="tab" id="nextProblem">Next</button>
+            </div>
+          </div>
+          <div class="answer-box" id="problemAnswer">Answer</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Quiz">
+        <div class="slide-title">
+          <p class="eyebrow">Interactive drill</p>
+          <h2>Choose the best factory decision.</h2>
+        </div>
+        <div class="quiz-layout">
+          <div class="question">
+            <h3 id="quizPrompt">Prompt</h3>
+            <div class="choice-grid" id="quizChoices"></div>
+            <div class="toolbar">
+              <button class="tab" id="nextQuiz">Next question</button>
+            </div>
+          </div>
+          <div class="answer-box" id="quizAnswer">Pick an answer to see the reasoning.</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Revision">
+        <div class="slide-title">
+          <p class="eyebrow">Revision</p>
+          <h2>Memory hooks and files.</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Remember</h3>
+            <ul>
+              <li>Factory hides object creation details.</li>
+              <li>Client asks by intent, not concrete class.</li>
+              <li>Simple Factory chooses from input.</li>
+              <li>Factory Method lets subclasses create products.</li>
+              <li>Abstract Factory creates related product families.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Revision files</h3>
+            <p class="mini">Markdown notes: <a class="notes-link" href="./revision-notes.md">revision-notes.md</a></p>
+            <p class="mini">PDF notes: <a class="notes-link" href="./revision-notes.pdf">revision-notes.pdf</a></p>
+          </div>
+        </div>
+        <div class="concept-box">
+          <h3>One-line interview answer</h3>
+          <p>"I use Factory when object creation has branching, setup, or provider-specific details that should not leak into business services."</p>
+        </div>
+      </article>
+    </section>
+
+    <footer class="footer-nav">
+      <button class="icon-btn" id="prevSlide" aria-label="Previous slide">&lt;</button>
+      <div class="slide-count" id="slideCount">1 / 11</div>
+      <div class="toc" id="toc"></div>
+      <button class="icon-btn" id="nextSlide" aria-label="Next slide">&gt;</button>
+    </footer>
+  </main>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const progressBar = document.getElementById("progressBar");
+    const slideCount = document.getElementById("slideCount");
+    const toc = document.getElementById("toc");
+    let slideIndex = 0;
+
+    slides.forEach((slide, index) => {
+      const dot = document.createElement("button");
+      dot.className = "dot";
+      dot.type = "button";
+      dot.setAttribute("aria-label", `Go to ${slide.dataset.title}`);
+      dot.addEventListener("click", () => showSlide(index));
+      toc.appendChild(dot);
+    });
+
+    function showSlide(index) {
+      slideIndex = Math.max(0, Math.min(index, slides.length - 1));
+      slides.forEach((slide, i) => slide.classList.toggle("active", i === slideIndex));
+      Array.from(toc.children).forEach((dot, i) => dot.classList.toggle("active", i === slideIndex));
+      progressBar.style.width = `${((slideIndex + 1) / slides.length) * 100}%`;
+      slideCount.textContent = `${slideIndex + 1} / ${slides.length}`;
+    }
+
+    document.getElementById("prevSlide").addEventListener("click", () => showSlide(slideIndex - 1));
+    document.getElementById("nextSlide").addEventListener("click", () => showSlide(slideIndex + 1));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight") showSlide(slideIndex + 1);
+      if (event.key === "ArrowLeft") showSlide(slideIndex - 1);
+    });
+
+    const exampleData = {
+      simple: {
+        title: "Simple Factory",
+        text: `
+          <h3>Simple Factory</h3>
+          <p>A single factory method chooses which concrete product to create based on input.</p>
+          <ul>
+            <li><strong>When:</strong> product selection is straightforward.</li>
+            <li><strong>Where:</strong> notification senders, exporters, payment providers.</li>
+            <li><strong>Tradeoff:</strong> simple, but the factory can grow if too many products appear.</li>
+          </ul>`,
+        js: `class EmailSender {
+  send(to, message) {
+    console.log("Email to " + to + ": " + message);
+  }
+}
+
+class SmsSender {
+  send(to, message) {
+    console.log("SMS to " + to + ": " + message);
+  }
+}
+
+class NotificationFactory {
+  static create(type) {
+    if (type === "sms") return new SmsSender();
+    return new EmailSender();
+  }
+}
+
+const sender = NotificationFactory.create("sms");
+sender.send("+8801000000000", "Order confirmed");`,
+        java: `interface NotificationSender {
+  void send(String to, String message);
+}
+
+class EmailSender implements NotificationSender {
+  public void send(String to, String message) {
+    System.out.println("Email to " + to + ": " + message);
+  }
+}
+
+class SmsSender implements NotificationSender {
+  public void send(String to, String message) {
+    System.out.println("SMS to " + to + ": " + message);
+  }
+}
+
+class NotificationFactory {
+  static NotificationSender create(String type) {
+    if ("sms".equals(type)) return new SmsSender();
+    return new EmailSender();
+  }
+}`
+      },
+      method: {
+        title: "Factory Method",
+        text: `
+          <h3>Factory Method</h3>
+          <p>A base creator defines a creation method, while subclasses decide the concrete product.</p>
+          <ul>
+            <li><strong>When:</strong> subclasses represent different workflows.</li>
+            <li><strong>Where:</strong> platform services, report builders, logistics providers.</li>
+            <li><strong>Benefit:</strong> shared workflow, customizable product creation.</li>
+          </ul>`,
+        js: `class ReportExporter {
+  export(data) {
+    const formatter = this.createFormatter();
+    return formatter.format(data);
+  }
+}
+
+class PdfReportExporter extends ReportExporter {
+  createFormatter() {
+    return new PdfFormatter();
+  }
+}
+
+class CsvReportExporter extends ReportExporter {
+  createFormatter() {
+    return new CsvFormatter();
+  }
+}`,
+        java: `abstract class ReportExporter {
+  public String export(List<Row> data) {
+    Formatter formatter = createFormatter();
+    return formatter.format(data);
+  }
+
+  protected abstract Formatter createFormatter();
+}
+
+class PdfReportExporter extends ReportExporter {
+  protected Formatter createFormatter() {
+    return new PdfFormatter();
+  }
+}
+
+class CsvReportExporter extends ReportExporter {
+  protected Formatter createFormatter() {
+    return new CsvFormatter();
+  }
+}`
+      },
+      abstract: {
+        title: "Abstract Factory",
+        text: `
+          <h3>Abstract Factory</h3>
+          <p>A factory creates a family of related products that should be used together.</p>
+          <ul>
+            <li><strong>When:</strong> products must be compatible as a set.</li>
+            <li><strong>Where:</strong> UI kits, cloud providers, database families, tenant-specific services.</li>
+            <li><strong>Benefit:</strong> prevents mixing incompatible implementations.</li>
+          </ul>`,
+        js: `class WebUiFactory {
+  createButton() {
+    return new WebButton();
+  }
+
+  createDialog() {
+    return new WebDialog();
+  }
+}
+
+class MobileUiFactory {
+  createButton() {
+    return new MobileButton();
+  }
+
+  createDialog() {
+    return new MobileDialog();
+  }
+}
+
+function renderCheckout(factory) {
+  const button = factory.createButton();
+  const dialog = factory.createDialog();
+  button.render();
+  dialog.open();
+}`,
+        java: `interface UiFactory {
+  Button createButton();
+  Dialog createDialog();
+}
+
+class WebUiFactory implements UiFactory {
+  public Button createButton() {
+    return new WebButton();
+  }
+
+  public Dialog createDialog() {
+    return new WebDialog();
+  }
+}
+
+class MobileUiFactory implements UiFactory {
+  public Button createButton() {
+    return new MobileButton();
+  }
+
+  public Dialog createDialog() {
+    return new MobileDialog();
+  }
+}`
+      }
+    };
+
+    let activeExample = "simple";
+    let activeLang = "js";
+    const exampleText = document.getElementById("exampleText");
+    const exampleCode = document.getElementById("exampleCode");
+    const exampleCodeTitle = document.getElementById("exampleCodeTitle");
+
+    function renderExample() {
+      const data = exampleData[activeExample];
+      exampleText.innerHTML = data.text;
+      exampleCodeTitle.textContent = `${data.title} example`;
+      exampleCode.textContent = data[activeLang];
+    }
+
+    document.querySelectorAll("[data-example]").forEach(button => {
+      button.addEventListener("click", () => {
+        activeExample = button.dataset.example;
+        document.querySelectorAll("[data-example]").forEach(tab => tab.classList.toggle("active", tab === button));
+        renderExample();
+      });
+    });
+
+    document.querySelectorAll("[data-lang]").forEach(button => {
+      button.addEventListener("click", () => {
+        activeLang = button.dataset.lang;
+        document.querySelectorAll("[data-lang]").forEach(item => item.classList.toggle("active", item === button));
+        renderExample();
+      });
+    });
+
+    const qaItems = [
+      {
+        q: "What is the Factory design pattern?",
+        a: "Factory is a creational pattern that encapsulates object creation so client code does not directly depend on concrete construction details."
+      },
+      {
+        q: "What problem does Factory solve?",
+        a: "It solves scattered creation logic. Instead of creating concrete classes throughout business code, creation is centralized behind a factory."
+      },
+      {
+        q: "Simple Factory vs Factory Method?",
+        a: "Simple Factory uses one method to select and create products. Factory Method lets subclasses decide which product to create."
+      },
+      {
+        q: "Factory Method vs Abstract Factory?",
+        a: "Factory Method creates one product through subclass choice. Abstract Factory creates families of related products through a factory interface."
+      },
+      {
+        q: "Which SOLID principle does Factory help?",
+        a: "Factory can support Dependency Inversion by letting services depend on product abstractions, and Open Closed Principle when new creators are added cleanly."
+      }
+    ];
+
+    const scenarioItems = [
+      {
+        q: "An order service creates EmailSender, SmsSender, and PushSender using if/else. What would you do?",
+        a: "Move sender creation into NotificationFactory. OrderService asks the factory for a sender and then uses the sender contract."
+      },
+      {
+        q: "A report service creates PDF, CSV, and XLSX exporters. The business asks for XML export. Which factory style fits?",
+        a: "A Simple Factory is enough if selection is based on requested format. If each exporter has a separate workflow subclass, Factory Method may fit."
+      },
+      {
+        q: "A UI app must create matching buttons, dialogs, and menus for web and mobile. Which factory pattern fits?",
+        a: "Abstract Factory, because it creates a family of compatible UI products for each platform."
+      },
+      {
+        q: "A service creates one User object with no branching or setup. Should you add a factory?",
+        a: "Probably not. Direct construction is clearer when creation is simple and stable."
+      }
+    ];
+
+    const problemItems = [
+      {
+        q: "Problem: add bKash payment gateway without changing CheckoutService. What design steps do you take?",
+        a: "Create PaymentGateway interface, implement BkashGateway, add it to PaymentGatewayFactory, and let CheckoutService depend on PaymentGateway instead of concrete providers."
+      },
+      {
+        q: "Problem: factory has 20 if/else branches. How do you improve it?",
+        a: "Use a registry map from key to creator function, split factories by bounded context, or use dependency injection configuration if the object graph is large."
+      },
+      {
+        q: "Problem: choose factory product from user input safely. How?",
+        a: "Use a whitelist of allowed keys and default behavior. Do not dynamically evaluate class names from raw user input."
+      },
+      {
+        q: "Problem: two tenants need different email and payment implementations that must match. Which pattern?",
+        a: "Use Abstract Factory. Each tenant factory returns a compatible family such as EmailSender, PaymentGateway, and InvoiceFormatter."
+      }
+    ];
+
+    function bindRotator(items, promptId, answerId, prevId, nextId) {
+      let index = 0;
+      const prompt = document.getElementById(promptId);
+      const answer = document.getElementById(answerId);
+      function render() {
+        prompt.textContent = items[index].q;
+        answer.innerHTML = `<strong>Answer:</strong><p>${items[index].a}</p>`;
+      }
+      document.getElementById(prevId).addEventListener("click", () => {
+        index = (index - 1 + items.length) % items.length;
+        render();
+      });
+      document.getElementById(nextId).addEventListener("click", () => {
+        index = (index + 1) % items.length;
+        render();
+      });
+      render();
+    }
+
+    const quiz = [
+      {
+        prompt: "Business code has if/else blocks creating EmailSender, SmsSender, and PushSender. What is the best move?",
+        choices: ["Create a NotificationFactory", "Duplicate OrderService", "Put credentials in every controller"],
+        answer: 0,
+        reason: "Creation varies by channel, so a factory can centralize concrete construction."
+      },
+      {
+        prompt: "A platform needs matching Button, Dialog, and Menu implementations for web and mobile. Which factory style fits best?",
+        choices: ["Abstract Factory", "One giant switch in every component", "No factory because UI is visual"],
+        answer: 0,
+        reason: "Abstract Factory creates compatible families of related products."
+      },
+      {
+        prompt: "A class creates a single simple ValueObject with no branching. Should you add a factory?",
+        choices: ["No, direct construction is fine", "Yes, factories are mandatory", "Only if it is JavaScript"],
+        answer: 0,
+        reason: "Factories are useful when creation has variation, setup, or complexity."
+      }
+    ];
+
+    let quizIndex = 0;
+    const quizPrompt = document.getElementById("quizPrompt");
+    const quizChoices = document.getElementById("quizChoices");
+    const quizAnswer = document.getElementById("quizAnswer");
+
+    function renderQuiz() {
+      const current = quiz[quizIndex];
+      quizPrompt.textContent = current.prompt;
+      quizAnswer.textContent = "Pick an answer to see the reasoning.";
+      quizChoices.innerHTML = "";
+      current.choices.forEach((choice, index) => {
+        const button = document.createElement("button");
+        button.className = "choice-btn";
+        button.type = "button";
+        button.textContent = choice;
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".choice-btn").forEach(item => item.classList.remove("selected"));
+          button.classList.add("selected");
+          const correct = index === current.answer;
+          quizAnswer.innerHTML = `<strong>${correct ? "Correct." : "Not quite."}</strong><p>${current.reason}</p>`;
+        });
+        quizChoices.appendChild(button);
+      });
+    }
+
+    document.getElementById("nextQuiz").addEventListener("click", () => {
+      quizIndex = (quizIndex + 1) % quiz.length;
+      renderQuiz();
+    });
+
+    renderExample();
+    bindRotator(qaItems, "qaPrompt", "qaAnswer", "prevQa", "nextQa");
+    bindRotator(scenarioItems, "scenarioPrompt", "scenarioAnswer", "prevScenario", "nextScenario");
+    bindRotator(problemItems, "problemPrompt", "problemAnswer", "prevProblem", "nextProblem");
+    renderQuiz();
+    showSlide(0);
+  </script>
+</body>
+</html>
